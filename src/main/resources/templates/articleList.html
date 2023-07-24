@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang=en xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>게시판</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+</head>
+<body>
+<div class="p-5 mb-5 text-center</> bg-light">
+    <h1 class="mb-3">My Community</h1>
+    <h4 class="mb-3">Welcome!</h4>
+</div>
+
+<div class="container">
+    <button type="button" id="create-btn"
+            th:onclick="|location.href='@{/board/new-article}'|"
+            class="btn btn-secondary btn-sm mb-3">글 등록</button>
+    <div class="row-6" th:each="article : ${articles}">
+        <div class="card">
+            <div class="card-header" th:text="|Posted on: ${#temporals.format(article.createdAt, 'yyyy-MM-dd HH:mm')} Author: ${article.author} View: ${article.view}|">
+            </div>
+            <div class="card-body">
+                <h5 class="card-title" th:text="${article.title}"></h5>
+                <a th:href="@{/board/{id}(id=${article.id})}" class="btn btn-primary">내용</a>
+            </div>
+        </div>
+        <br>
+    </div>
+
+    <button type="button" class="btn btn-secondary" onclick="location.href='/logout'">로그아웃</button>
+</div>
+
+<script src="/js/token.js"></script>
+<script src="/js/article.js"></script>
+</body>
