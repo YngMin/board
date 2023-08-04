@@ -2,6 +2,7 @@ package hello.board.service;
 
 import hello.board.domain.User;
 import hello.board.security.jwt.TokenProvider;
+import hello.board.service.query.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,7 +16,7 @@ public class TokenService {
 
     private final TokenProvider tokenProvider;
     private final RefreshTokenService refreshTokenService;
-    private final UserService userService;
+    private final UserQueryService userQueryService;
 
     public String createNewAccessToken(String refreshToken) {
         if (!tokenProvider.validToken(refreshToken)) {
@@ -23,7 +24,7 @@ public class TokenService {
         }
 
         Long userId = refreshTokenService.findByRefreshToken(refreshToken).getUserId();
-        User user = userService.findById(userId);
+        User user = userQueryService.findById(userId);
 
         return tokenProvider.generateToken(user, Duration.ofHours(2));
     }

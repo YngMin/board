@@ -1,4 +1,4 @@
-package hello.board.service.exception;
+package hello.board.exception;
 
 public class NoAuthorityException extends RuntimeException {
 

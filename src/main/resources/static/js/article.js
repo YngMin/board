@@ -92,6 +92,10 @@ function httpRequest(method, url, body, success, fail) {
         body: body,
     }).then(response => {
         if (response.status === 200 || response.status === 201) {
+            // const token = response.headers.get("Authorization");
+            // if (token) {
+            //     localStorage.setItem("access_token", token);
+            // }
             return success();
         }
         const refresh_token = getCookie('refresh_token');

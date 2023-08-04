@@ -1,12 +1,14 @@
 package hello.board.security.config;
 
 import hello.board.security.jwt.TokenAuthenticationFilter;
+import hello.board.security.oauth2.handler.OAuth2AuthenticationFailureHandler;
+import hello.board.security.oauth2.handler.OAuth2AuthenticationSuccessHandler;
 import hello.board.security.oauth2.repository.CookieAuthorizationRequestRepository;
 import hello.board.security.oauth2.service.CustomOAuth2UserService;
-import hello.board.security.oauth2.handler.OAuth2AuthenticationSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
@@ -23,12 +25,17 @@ import static org.springframework.security.web.util.matcher.AntPathRequestMatche
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    public static final String HEADER_AUTHORIZATION = "Authorization";
+    public static final String TOKEN_PREFIX = "Bearer ";
+
     private final CustomOAuth2UserService oAuth2UserService;
     private final TokenAuthenticationFilter tokenAuthenticationFilter;
     private final CookieAuthorizationRequestRepository cookieAuthorizationRequestRepository;
     private final OAuth2AuthenticationSuccessHandler successHandler;
+    private final OAuth2AuthenticationFailureHandler failureHandler;
 
     @Bean
+    @Profile("local")
     public WebSecurityCustomizer configure() {
         return (web) -> web.ignoring()
                 .requestMatchers(toH2Console())
@@ -36,18 +43,19 @@ public class SecurityConfig {
     }
 
     @Bean
+    @Profile("local")
     public SecurityFilterChain filterChain(HttpSecurity http) {
         try {
             return http
-                    .csrf(AbstractHttpConfigurer::disable)
                     .httpBasic(AbstractHttpConfigurer::disable)
+                    .csrf(AbstractHttpConfigurer::disable)
                     .formLogin(AbstractHttpConfigurer::disable)
                     .rememberMe(AbstractHttpConfigurer::disable)
                     .sessionManagement(config -> config
                             .sessionCreationPolicy(STATELESS)
                     )
                     .authorizeHttpRequests(request -> request
-                            .requestMatchers(antMatcher("/api/token"), antMatcher("/oauth2/**"), antMatcher("/login"), antMatcher("/board")).permitAll()
+                            .requestMatchers(antMatcher("/api/token")).permitAll()
                             .requestMatchers(antMatcher("/api/**")).authenticated()
                             .anyRequest().permitAll()
                     )
@@ -78,5 +86,6 @@ public class SecurityConfig {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+
     }
 }

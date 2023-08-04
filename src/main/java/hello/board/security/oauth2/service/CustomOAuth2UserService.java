@@ -44,7 +44,8 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
     private static User updateUser(OAuth2UserInfo oAuth2UserInfo, AuthProvider authProvider, User user) {
         authProviderCheck(authProvider, user);
-        return user.update(oAuth2UserInfo.getUsername(), oAuth2UserInfo.getEmail());
+        return user.updateUsername(oAuth2UserInfo.getUsername())
+                .updateEmail(oAuth2UserInfo.getEmail());
     }
 
     private static void authProviderCheck(AuthProvider authProvider, User user) {

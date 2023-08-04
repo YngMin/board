@@ -1,6 +1,7 @@
 package hello.board.service;
 
 import hello.board.domain.RefreshToken;
+import hello.board.exception.FailToFindEntityException;
 import hello.board.repository.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,6 @@ public class RefreshTokenService {
 
     public RefreshToken findByRefreshToken(String refreshToken) {
         return refreshTokenRepository.findByRefreshToken(refreshToken)
-                .orElseThrow(() -> new IllegalArgumentException("Unexpected Token"));
+                .orElseThrow(() -> new FailToFindEntityException("Unexpected Token"));
     }
 }

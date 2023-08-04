@@ -32,6 +32,12 @@
     </div>
   </div>
   <hr class="my-4">
+  <label for="textarea-comment" class="form-label"></label>
+  <div>
+    <textarea id="textarea-comment" class="form-control form-control-lg" placeholder="댓글을 작성해주세요."></textarea>
+    <button id="comment-create-btn" type="button" class="btn btn-secondary btn-sm">등록</button>
+  </div>
+  <hr class="my-4">
   <div class="row">
     <div class="col">
       <table class="table-striped table">
@@ -39,10 +45,23 @@
           <td th:text="${comment.author}"></td>
           <td th:text="${comment.content}"></td>
           <td th:text="${#temporals.format(article.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+          <td>
+            <button type="button"
+                    th:onclick="|location.href='@{/board/{articleId}/modifying-comment(articleId=${article.id}, id=${comment.id})}'|"
+                    class="btn btn-secondary btn-sm">수정</button>
+          </td>
+          <td>
+            <button type="button"
+                    class="btn btn-secondary btn-sm comment-delete-btn">삭제</button>
+          </td>
         </tr>
       </table>
+      <div th:each="comment : ${article.comments}">
+        <input th:value="${comment.id}" th:id="|comment${commentStat.index}|" type="hidden">
+      </div>
     </div>
   </div>
 </div>
+<script src="/js/comment.js"></script>
 <script src="/js/article.js"></script>
 </body>

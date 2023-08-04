@@ -1,7 +1,6 @@
 package hello.board.dto.view;
 
 import hello.board.domain.Article;
-import hello.board.domain.Comment;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -31,7 +30,7 @@ public class ArticleViewResponse {
     }
 
 
-    public static ArticleViewResponse from(Article article, List<Comment> comments) {
+    public static ArticleViewResponse from(Article article) {
         return ArticleViewResponse.builder()
                 .id(article.getId())
                 .title(article.getTitle())
@@ -39,7 +38,7 @@ public class ArticleViewResponse {
                 .author(article.getAuthor().getUsername())
                 .createdAt(article.getCreatedAt())
                 .view(article.getView())
-                .comments(comments.stream()
+                .comments(article.getComments().stream()
                         .map(CommentViewResponse::from)
                         .toList())
                 .build();

@@ -3,19 +3,19 @@ package hello.board.dto.api;
 import hello.board.domain.Article;
 import hello.board.dto.service.ArticleServiceDto;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public abstract class ArticleApiDto {
     @Getter
     @Setter
     public static class SaveRequest {
 
-        @NotEmpty
+        @NotBlank
         private String title;
 
         @NotBlank
@@ -45,11 +45,48 @@ public abstract class ArticleApiDto {
         private final String content;
         private final String author;
         private final Long view;
+        private final List<CommentApiDto.FindResponse> comments;
         private final LocalDateTime createdAt;
 
 
         @Builder
-        private FindResponse(String title, String content, String author, Long view, LocalDateTime createdAt) {
+        private FindResponse(String title, String content, String author, Long view, List<CommentApiDto.FindResponse> comments, LocalDateTime createdAt) {
+            this.title = title;
+            this.content = content;
+            this.author = author;
+            this.view = view;
+            this.comments = comments;
+            this.createdAt = createdAt;
+        }
+
+        public static FindResponse from(Article article) {
+            List<CommentApiDto.FindResponse> comments = article.getComments().stream()
+                    .map(CommentApiDto.FindResponse::from)
+                    .toList();
+
+            return FindResponse.builder()
+                    .title(article.getTitle())
+                    .content(article.getContent())
+                    .author(article.getAuthor().getUsername())
+                    .view(article.getView())
+                    .comments(comments)
+                    .createdAt(article.getCreatedAt())
+                    .build();
+        }
+    }
+
+    @Getter
+    public static class FindListResponse {
+
+        private final String title;
+        private final String content;
+        private final String author;
+        private final Long view;
+        private final LocalDateTime createdAt;
+
+
+        @Builder
+        private FindListResponse(String title, String content, String author, Long view, LocalDateTime createdAt) {
             this.title = title;
             this.content = content;
             this.author = author;
@@ -57,8 +94,8 @@ public abstract class ArticleApiDto {
             this.createdAt = createdAt;
         }
 
-        public static FindResponse from(Article article) {
-            return FindResponse.builder()
+        public static FindListResponse from(Article article) {
+            return FindListResponse.builder()
                     .title(article.getTitle())
                     .content(article.getContent())
                     .author(article.getAuthor().getUsername())
@@ -72,7 +109,7 @@ public abstract class ArticleApiDto {
     @Setter
     public static class UpdateRequest {
 
-        @NotEmpty
+        @NotBlank
         private String title;
 
         @NotBlank

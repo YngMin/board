@@ -12,24 +12,51 @@
 </div>
 
 <div class="container">
-    <button type="button" id="create-btn"
-            th:onclick="|location.href='@{/board/new-article}'|"
-            class="btn btn-secondary btn-sm mb-3">글 등록</button>
+    <div class="row">
+        <div class="col">
+            <button type="button" id="new-article-btn"
+                    th:onclick="|location.href='@{/board/new-article}'|"
+                    class="btn btn-primary btn-sm mb-3">글 등록</button>
+        </div>
+        <div class="col">
+            <form th:form th:object="${cond}">
+                <label th:for="*{type}" class="form-label">유형</label>
+                <select th:field="*{type}" class="form-select">
+                    <option th:each="type : ${articleSearchTypeList}" th:value="${type}" th:text="${type.kor}"></option>
+                </select>
+                <label th:for="*{keyword}" class="form-label">검색</label>
+                <input type="text" th:field="*{keyword}" placeholder="검색어">
+                <button type="submit" class="btn btn-secondary btn-sm mb-3">검색</button>
+            </form>
+        </div>
+    </div>
+
+
     <div class="row-6" th:each="article : ${articles}">
         <div class="card">
             <div class="card-header" th:text="|Posted on: ${#temporals.format(article.createdAt, 'yyyy-MM-dd HH:mm')} Author: ${article.author} View: ${article.view}|">
             </div>
             <div class="card-body">
-                <h5 class="card-title" th:text="${article.title}"></h5>
-                <a th:href="@{/board/{id}(id=${article.id})}" class="btn btn-primary">내용</a>
+                <a class="card-title" th:text="${article.title}" th:href="@{/board/{id}(id=${article.id})}"></a>
             </div>
         </div>
         <br>
     </div>
 
-    <button type="button" class="btn btn-secondary" onclick="location.href='/logout'">로그아웃</button>
+    <hr class="my-4">
+
+    <div class="row container">
+        <div class="col">
+            <ul class="pagination">
+                <li class="page-item"><a class="page-link" th:href="@{/board?page={prev}(prev=${prevNumber})}">Previous</a></li>
+                <li class="page-item" th:each="num: ${pageNumbers}"><a class="page-link" th:href="@{/board?page={pageNum}(pageNum=${num})}" th:text="${num}"></a></li>
+                <li class="page-item"><a class="page-link" th:href="@{/board?page={next}(next=${nextNumber})}">Next</a></li>
+            </ul>
+        </div>
+    </div>
 </div>
 
 <script src="/js/token.js"></script>
 <script src="/js/article.js"></script>
+<!--<script src="/js/sendAccessToken.js"></script>-->
 </body>

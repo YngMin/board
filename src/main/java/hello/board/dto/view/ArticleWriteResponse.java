@@ -16,7 +16,7 @@ public class ArticleWriteResponse {
         this.content = content;
     }
 
-    public static ArticleWriteResponse emptyResponse() {
+    public static ArticleWriteResponse empty() {
         return new ArticleWriteResponse(null, "", "");
     }
 

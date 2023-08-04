@@ -4,12 +4,14 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Getter
+@ToString(of = {"id", "title", "content", "view"})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Article extends BaseEntity {
 
@@ -29,7 +31,7 @@ public class Article extends BaseEntity {
     private User author;
 
     @Column(nullable = false)
-    private Long view = 0L;
+    private long view = 0L;
 
     @OneToMany(mappedBy = "article", cascade = CascadeType.REMOVE)
     private List<Comment> comments = new ArrayList<>();
@@ -59,5 +61,10 @@ public class Article extends BaseEntity {
 
     public void deleteComment(Comment comment) {
         comments.remove(comment);
+    }
+
+    public Article increaseView() {
+        view++;
+        return this;
     }
 }

@@ -9,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.stereotype.Component;
 
 import java.security.Key;
 import java.time.Duration;
@@ -18,7 +17,6 @@ import java.util.Date;
 import java.util.List;
 
 @Slf4j
-@Component
 public class TokenProvider {
     private final JwtProperties jwtProperties;
     private final JwtParser jwtParser;
@@ -72,6 +70,9 @@ public class TokenProvider {
     }
 
     public Long getUserId(String token) {
+        if (token == null) {
+            return null;
+        }
         return getClaims(token)
                 .get("id", Long.class);
     }

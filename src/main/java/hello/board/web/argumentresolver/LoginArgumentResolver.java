@@ -1,8 +1,8 @@
 package hello.board.web.argumentresolver;
 
+import hello.board.exception.NeedLoginException;
 import hello.board.security.jwt.TokenProvider;
 import hello.board.web.annotation.Login;
-import hello.board.web.exception.NeedLoginException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,16 +30,14 @@ public class LoginArgumentResolver implements HandlerMethodArgumentResolver {
     }
 
     @Override
-    public Long resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
+    public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
 
         HttpServletRequest request = (HttpServletRequest) webRequest.getNativeRequest();
 
         String header = request.getHeader(HEADER_AUTHORIZATION);
         String token = getAccessToken(header);
 
-        Long userId = tokenProvider.getUserId(token);
-
-        return loginCheck(userId);
+        return tokenProvider.getUserId(token);
     }
 
     private String getAccessToken(String authorizationHeader) {
@@ -55,7 +53,7 @@ public class LoginArgumentResolver implements HandlerMethodArgumentResolver {
 
     private static Long loginCheck(Long userId) {
         if (userId == null) {
-            throw new NeedLoginException();
+            throw new NeedLoginException("Need Login");
         }
 
         return userId;

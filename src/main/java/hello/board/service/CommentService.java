@@ -4,58 +4,36 @@ import hello.board.domain.Article;
 import hello.board.domain.Comment;
 import hello.board.domain.User;
 import hello.board.dto.service.CommentServiceDto;
-import hello.board.repository.ArticleRepository;
+import hello.board.exception.NoAuthorityException;
 import hello.board.repository.CommentRepository;
-import hello.board.repository.UserRepository;
-import hello.board.service.exception.NoAuthorityException;
+import hello.board.service.query.ArticleQueryService;
+import hello.board.service.query.CommentQueryService;
+import hello.board.service.query.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 @Service
-@Transactional(readOnly = true)
+@Transactional
 @RequiredArgsConstructor
 public class CommentService {
 
-    private final ArticleRepository articleRepository;
     private final CommentRepository commentRepository;
-    private final UserRepository userRepository;
 
-    @Transactional
+    private final UserQueryService userQueryService;
+    private final ArticleQueryService articleQueryService;
+    private final CommentQueryService commentQueryService;
+
     public Long save(Long articleId, Long userId, CommentServiceDto.Save param) {
-        Article article = articleRepository.findById(articleId)
-                .orElseThrow(IllegalArgumentException::new);
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(IllegalArgumentException::new);
+        Article article = articleQueryService.findById(articleId);
+        User user = userQueryService.findById(userId);
 
         return commentRepository.save(param.toEntity(article, user)).getId();
     }
 
-    public Comment findById(Long id) {
-        return commentRepository.findById(id)
-                .orElseThrow(IllegalArgumentException::new);
-    }
-
-    public Comment findComment(Long commentId, Long articleId) {
-        Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(IllegalArgumentException::new);
-
-        validateArticle(comment, articleId);
-        return comment;
-    }
-
-    public List<Comment> findCommentsOfArticle(Long articleId) {
-        return commentRepository.findCommentByArticleId(articleId);
-    }
-
-    @Transactional
     public void update(Long commentId, Long articleId, Long userId, CommentServiceDto.Update param) {
 
-        Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(IllegalArgumentException::new);
+        Comment comment = commentQueryService.findById(commentId);
 
         validateUser(comment, userId);
         validateArticle(comment, articleId);
@@ -65,10 +43,8 @@ public class CommentService {
         }
     }
 
-    @Transactional
     public void delete(Long commentId, Long articleId, Long userId) {
-        Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(IllegalArgumentException::new);
+        Comment comment = commentQueryService.findById(commentId);
 
         validateUser(comment, userId);
         validateArticle(comment, articleId);
@@ -77,18 +53,23 @@ public class CommentService {
         commentRepository.delete(comment);
     }
 
+    @Transactional(readOnly = true)
+    public Comment lookUpComment(Long commentId, Long articleId) {
+        Comment comment = commentQueryService.findById(commentId);
+        validateArticle(comment, articleId);
+        return comment;
+    }
+
     private void validateArticle(Comment comment, Long articleId) {
-        Article article = articleRepository.findById(articleId)
-                .orElseThrow(IllegalArgumentException::new);
+        Article article = articleQueryService.findById(articleId);
 
         if (comment.getArticle() != article) {
-            throw new IllegalStateException();
+            throw new IllegalArgumentException("This Article does not have this Comment");
         }
     }
 
     private void validateUser(Comment comment, Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(IllegalArgumentException::new);
+        User user = userQueryService.findById(userId);
 
         if (comment.getAuthor() != user) {
             throw new NoAuthorityException();

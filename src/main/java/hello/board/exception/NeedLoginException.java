@@ -1,4 +1,4 @@
-package hello.board.web.exception;
+package hello.board.exception;
 
 public class NeedLoginException extends RuntimeException {
 

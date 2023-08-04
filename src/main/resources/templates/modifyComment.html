@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>블로그 글</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+</head>
+<body>
+<div class="p-5 mb-5 text-center</> bg-light">
+  <h1 class="mb-3">Community</h1>
+  <h4 class="mb-3">Welcome!</h4>
+</div>
+
+<div class="container mt-5">
+  <div class="row">
+    <div class="col-lg-8">
+      <article>
+        <input type="hidden" id="article-id" th:value="${articleId}">
+        <input type="hidden" id="comment-id" th:value="${comment.id}">
+        <section class="mb-5">
+          <textarea class="form-control h-25" rows="10" placeholder="내용" id="textarea-comment" th:text="${comment.content}"></textarea>
+        </section>
+        <button type="button" id="comment-modify-btn" class="btn btn-primary btn-sm">수정</button>
+      </article>
+    </div>
+  </div>
+</div>
+
+<script src="/js/article.js"></script>
+<script src="/js/comment.js"></script>
+</body>
