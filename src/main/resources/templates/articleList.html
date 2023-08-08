@@ -7,8 +7,9 @@
 </head>
 <body>
 <div class="d-flex justify-content-end bg-light px-5 py-3">
-    <a th:if="${user.id == null}" th:href="@{/login}">로그인</a>
-    <a th:if="${user.id != null}" th:href="@{/logout}">로그아웃</a>
+    <a th:if="${user.id == null}" th:href="@{/login}" class="mx-1">로그인</a>
+    <a th:if="${user.id == null}" th:href="@{/join}" class="mx-1">회원가입</a>
+    <a th:if="${user.id != null}" th:href="@{/logout}" class="mx-1">로그아웃</a>
 </div>
 <div class="p-5 mb-5 text-center</> bg-light">
     <h1 class="mb-3">My Community</h1>
