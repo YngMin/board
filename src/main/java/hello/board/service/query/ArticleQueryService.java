@@ -1,9 +1,9 @@
 package hello.board.service.query;
 
 import hello.board.domain.Article;
-import hello.board.dto.service.ArticleSearchCond;
+import hello.board.dto.service.search.ArticleSearchCond;
 import hello.board.exception.FailToFindEntityException;
-import hello.board.repository.article.ArticleRepository;
+import hello.board.repository.ArticleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -31,6 +31,11 @@ public class ArticleQueryService {
 
     public Page<Article> search(int page, int size) {
         return articleRepository.search(PageRequest.of(page, size));
+    }
+
+    public Article findWithComments(Long id) {
+        return articleRepository.findWithComments(id)
+                .orElseThrow(() -> FailToFindEntityException.of("Article"));
     }
 
     private static boolean isConditionEmpty(ArticleSearchCond cond) {

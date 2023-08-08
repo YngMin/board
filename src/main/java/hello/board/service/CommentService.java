@@ -4,14 +4,16 @@ import hello.board.domain.Article;
 import hello.board.domain.Comment;
 import hello.board.domain.User;
 import hello.board.dto.service.CommentServiceDto;
+import hello.board.exception.FailToFindEntityException;
 import hello.board.exception.NoAuthorityException;
 import hello.board.repository.CommentRepository;
 import hello.board.service.query.ArticleQueryService;
-import hello.board.service.query.CommentQueryService;
 import hello.board.service.query.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Objects;
 
 @Service
 @Transactional
@@ -22,7 +24,6 @@ public class CommentService {
 
     private final UserQueryService userQueryService;
     private final ArticleQueryService articleQueryService;
-    private final CommentQueryService commentQueryService;
 
     public Long save(Long articleId, Long userId, CommentServiceDto.Save param) {
         Article article = articleQueryService.findById(articleId);
@@ -32,8 +33,8 @@ public class CommentService {
     }
 
     public void update(Long commentId, Long articleId, Long userId, CommentServiceDto.Update param) {
-
-        Comment comment = commentQueryService.findById(commentId);
+        Comment comment = commentRepository.findWithArticleAndAuthorById(commentId)
+                .orElseThrow(() -> FailToFindEntityException.of("comment"));
 
         validateUser(comment, userId);
         validateArticle(comment, articleId);
@@ -44,7 +45,8 @@ public class CommentService {
     }
 
     public void delete(Long commentId, Long articleId, Long userId) {
-        Comment comment = commentQueryService.findById(commentId);
+        Comment comment = commentRepository.findWithArticleAndAuthorById(commentId)
+                .orElseThrow(() -> FailToFindEntityException.of("comment"));
 
         validateUser(comment, userId);
         validateArticle(comment, articleId);
@@ -55,23 +57,21 @@ public class CommentService {
 
     @Transactional(readOnly = true)
     public Comment lookUpComment(Long commentId, Long articleId) {
-        Comment comment = commentQueryService.findById(commentId);
+        Comment comment = commentRepository.findWithArticleById(commentId)
+                .orElseThrow(() -> FailToFindEntityException.of("comment"));
+
         validateArticle(comment, articleId);
         return comment;
     }
 
-    private void validateArticle(Comment comment, Long articleId) {
-        Article article = articleQueryService.findById(articleId);
-
-        if (comment.getArticle() != article) {
+    private static void validateArticle(Comment comment, Long articleId) {
+        if (!Objects.equals(comment.getArticle().getId(), articleId)) {
             throw new IllegalArgumentException("This Article does not have this Comment");
         }
     }
 
-    private void validateUser(Comment comment, Long userId) {
-        User user = userQueryService.findById(userId);
-
-        if (comment.getAuthor() != user) {
+    private static void validateUser(Comment comment, Long userId) {
+        if (!Objects.equals(comment.getAuthor().getId(), userId)) {
             throw new NoAuthorityException();
         }
     }

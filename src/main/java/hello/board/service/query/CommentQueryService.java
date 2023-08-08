@@ -5,17 +5,18 @@ import hello.board.domain.Comment;
 import hello.board.exception.FailToFindEntityException;
 import hello.board.repository.CommentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.Objects;
 
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class CommentQueryService {
 
-    private final ArticleQueryService articleQueryService;
     private final CommentRepository commentRepository;
 
     public Comment findById(Long id) {
@@ -23,21 +24,26 @@ public class CommentQueryService {
                 .orElseThrow(() -> FailToFindEntityException.of("Comment"));
     }
 
-    public Comment getCommentForModifying(Long commentId, Long articleId) {
-        Comment comment = this.findById(commentId);
+    public Comment getCommentForUpdateView(Long commentId, Long articleId) {
+        Comment comment = commentRepository.findWithArticleById(commentId)
+                        .orElseThrow(() -> FailToFindEntityException.of("Comment"));
+
         validateArticle(comment, articleId);
+
         return comment;
     }
 
-    private void validateArticle(Comment comment, Long articleId) {
-        Article article = articleQueryService.findById(articleId);
-
-        if (comment.getArticle() != article) {
-            throw new IllegalArgumentException("This Article does not have this Comment");
-        }
+    public Page<Comment> findByArticleId(Long articleId, Pageable pageable) {
+        return commentRepository.findByArticleId(articleId, pageable);
     }
 
-    public List<Comment> findCommentsOfArticle(Long articleId) {
-        return commentRepository.findCommentByArticleId(articleId);
+    public Page<Comment> findByArticle(Article article, Pageable pageable) {
+        return commentRepository.findByArticle(article, pageable);
+    }
+
+    private static void validateArticle(Comment comment, Long articleId) {
+        if (!Objects.equals(comment.getArticle().getId(), articleId)) {
+            throw new IllegalArgumentException("This Article does not have this Comment");
+        }
     }
 }

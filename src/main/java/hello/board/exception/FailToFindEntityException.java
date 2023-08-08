@@ -1,8 +1,5 @@
 package hello.board.exception;
 
-import lombok.Getter;
-
-@Getter
 public class FailToFindEntityException extends RuntimeException {
 
     public FailToFindEntityException() {
@@ -22,6 +19,6 @@ public class FailToFindEntityException extends RuntimeException {
     }
 
     public static FailToFindEntityException of(String entityName) {
-        return new FailToFindEntityException("%s Not Found".formatted(entityName));
+        return new FailToFindEntityException(entityName + " Not Found");
     }
 }

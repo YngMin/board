@@ -29,7 +29,7 @@ const commentCreateButton = document.getElementById('comment-create-btn');
 
 if (commentCreateButton) {
     commentCreateButton.addEventListener('click', event => {
-        body = JSON.stringify({
+        let body = JSON.stringify({
             content: document.getElementById('textarea-comment').value
         });
         function success() {
@@ -52,7 +52,7 @@ if (commentModifyButton) {
 
 
     commentModifyButton.addEventListener('click', event => {
-        body = JSON.stringify({
+        let body = JSON.stringify({
             content: document.getElementById('textarea-comment').value
         });
 

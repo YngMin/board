@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Join</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css">
+
+    <style>
+        .gradient-custom {
+            background: #6a11cb;
+            background: -webkit-linear-gradient(to right, rgba(106, 17, 203, 1), rgba(37, 117, 252, 1));
+            background: linear-gradient(to right, rgba(106, 17, 203, 1), rgba(37, 117, 252, 1))
+        }
+        .field-error {
+            border-color: #dc3545;
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body class="gradient-custom">
+<section class="d-flex vh-100">
+    <div class="container-fluid row justify-content-center align-content-center">
+        <div class="card bg-dark" style="border-radius: 1rem;">
+            <div class="card-body p-5 text-center">
+                <h2 class="text-white">JOIN</h2>
+                <p class="text-white-50 mt-2 mb-5">회원가입</p>
+                <form th:action th:object="${user}" method="post">
+                    <div th:if="${#fields.hasGlobalErrors()}">
+                        <p class="field-error" th:each="err : ${#fields.globalErrors()}"
+                           th:text="${err}">글로벌 오류 메시지</p>
+                    </div>
+                    <label th:for="name" class="form-label text-white-50">이름</label>
+                    <input type="text" th:field="*{name}" th:value="*{name}" class="form-control" th:errorclass="field-error">
+                    <div class="field-error" th:errors="*{name}">이름 오류</div>
+                    <label th:for="email" class="form-label text-white-50">이메일</label>
+                    <input type="text" th:field="*{email}" th:value="*{email}" class="form-control" th:errorclass="field-error">
+                    <div class="field-error" th:errors="*{email}">이메일 오류</div>
+                    <label th:for="password" class="form-label text-white-50">패스워드</label>
+                    <input type="password" th:field="*{password}" th:value="*{password}" class="form-control" th:errorclass="field-error">
+                    <div class="field-error" th:errors="*{password}">패스워드 오류</div>
+                    <label th:for="passwordCheck" class="form-label text-white-50">패스워드 확인</label>
+                    <input type="password" th:field="*{passwordCheck}" th:value="*{passwordCheck}" class="form-control" th:errorclass="field-error">
+                    <button type="submit" class="btn-primary btn m-3">등록</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+</body>
+</html>

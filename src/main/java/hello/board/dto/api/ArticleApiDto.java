@@ -3,17 +3,17 @@ package hello.board.dto.api;
 import hello.board.domain.Article;
 import hello.board.dto.service.ArticleServiceDto;
 import jakarta.validation.constraints.NotBlank;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-public abstract class ArticleApiDto {
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public final class ArticleApiDto {
+
     @Getter
     @Setter
-    public static class SaveRequest {
+    public static final class SaveRequest {
 
         @NotBlank
         private String title;
@@ -27,7 +27,7 @@ public abstract class ArticleApiDto {
     }
 
     @Getter
-    public static class SaveResponse {
+    public static final class SaveResponse {
 
         private final Long id;
         private SaveResponse(Long id) {
@@ -39,7 +39,7 @@ public abstract class ArticleApiDto {
     }
 
     @Getter
-    public static class FindResponse {
+    public static final class FindResponse {
 
         private final String title;
         private final String content;
@@ -67,7 +67,7 @@ public abstract class ArticleApiDto {
             return FindResponse.builder()
                     .title(article.getTitle())
                     .content(article.getContent())
-                    .author(article.getAuthor().getUsername())
+                    .author(article.getAuthor().getName())
                     .view(article.getView())
                     .comments(comments)
                     .createdAt(article.getCreatedAt())
@@ -76,7 +76,7 @@ public abstract class ArticleApiDto {
     }
 
     @Getter
-    public static class FindListResponse {
+    public static final class FindListResponse {
 
         private final String title;
         private final String content;
@@ -98,7 +98,7 @@ public abstract class ArticleApiDto {
             return FindListResponse.builder()
                     .title(article.getTitle())
                     .content(article.getContent())
-                    .author(article.getAuthor().getUsername())
+                    .author(article.getAuthor().getName())
                     .view(article.getView())
                     .createdAt(article.getCreatedAt())
                     .build();
@@ -107,7 +107,7 @@ public abstract class ArticleApiDto {
 
     @Getter
     @Setter
-    public static class UpdateRequest {
+    public static final class UpdateRequest {
 
         @NotBlank
         private String title;
@@ -121,14 +121,14 @@ public abstract class ArticleApiDto {
     }
 
     @Getter
-    public static class UpdateResponse {
+    public static final class UpdateResponse {
 
         private final String title;
         private final String content;
         private final LocalDateTime modifiedAt;
 
         @Builder
-        public UpdateResponse(String title, String content, LocalDateTime modifiedAt) {
+        private UpdateResponse(String title, String content, LocalDateTime modifiedAt) {
             this.title = title;
             this.content = content;
             this.modifiedAt = modifiedAt;

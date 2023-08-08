@@ -2,16 +2,18 @@ package hello.board.web.controller.view;
 
 import hello.board.domain.Article;
 import hello.board.domain.Comment;
-import hello.board.dto.service.ArticleSearchCond;
-import hello.board.dto.service.ArticleSearchType;
-import hello.board.dto.view.ArticleListViewResponse;
-import hello.board.dto.view.ArticleViewResponse;
-import hello.board.dto.view.ArticleWriteResponse;
+import hello.board.domain.User;
+import hello.board.dto.service.ArticleServiceDto;
+import hello.board.dto.service.search.ArticleSearchCond;
+import hello.board.dto.service.search.ArticleSearchType;
+import hello.board.dto.view.ArticleResponse;
 import hello.board.dto.view.CommentViewResponse;
+import hello.board.dto.view.UserViewResponse;
 import hello.board.service.ArticleService;
 import hello.board.service.query.ArticleQueryService;
 import hello.board.service.query.CommentQueryService;
 import hello.board.util.PageNumberGenerator;
+import hello.board.web.annotation.Login;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -27,12 +29,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RequiredArgsConstructor
 public class BoardViewController {
 
-    public static final int PAGE_SIZE = 10;
+    public static final int ARTICLE_PAGE_SIZE = 10;
+    public static final int COMMENT_PAGE_SIZE = 20;
+
 
     private final ArticleService articleService;
     private final ArticleQueryService articleQueryService;
     private final CommentQueryService commentQueryService;
-
 
     @GetMapping("/")
     public String home() {
@@ -42,11 +45,14 @@ public class BoardViewController {
     @GetMapping("/board")
     public String getArticles(@ModelAttribute ArticleSearchCond cond,
                               @RequestParam(name = "page", defaultValue = "1") int page,
+                              @Login User user,
                               Model model) {
 
-        Page<ArticleListViewResponse> articles = articleQueryService
-                .search(cond, convertToZeroStartIndex(page), PAGE_SIZE)
-                .map(ArticleListViewResponse::from);
+        model.addAttribute("user", UserViewResponse.from(user));
+
+        Page<ArticleResponse.ListView> articles = articleQueryService
+                .search(cond, toZeroStartIdx(page), ARTICLE_PAGE_SIZE)
+                .map(ArticleResponse.ListView::from);
 
         validatePageRequest(page, articles);
 
@@ -59,10 +65,32 @@ public class BoardViewController {
         model.addAttribute("pageNumbers", pg.getPageNumbers());
         model.addAttribute("nextNumber",pg.getNextPage());
 
+
         return "articleList";
 }
 
-    private static int convertToZeroStartIndex(int page) {
+    @GetMapping("/board/{id}")
+    public String getArticle(@RequestParam(defaultValue = "1") int page, @Login User user, @PathVariable Long id, Model model) {
+
+        model.addAttribute("user", UserViewResponse.from(user));
+
+        ArticleServiceDto.LookUp article = articleService
+                .lookUpWithPaginatedComments(id, toZeroStartIdx(page), COMMENT_PAGE_SIZE);
+
+        validatePageRequest(page, article.getComments());
+
+        model.addAttribute("article", ArticleResponse.View.from(article));
+
+        PageNumberGenerator pg = PageNumberGenerator.buildFrom(article.getComments());
+
+        model.addAttribute("prevNumber", pg.getPreviousPage());
+        model.addAttribute("pageNumbers", pg.getPageNumbers());
+        model.addAttribute("nextNumber",pg.getNextPage());
+
+        return "article";
+    }
+
+    private static int toZeroStartIdx(int page) {
         if (page <= 0) {
             throw new IllegalArgumentException("Wrong Page Number");
         }
@@ -70,19 +98,16 @@ public class BoardViewController {
         return page - 1;
     }
 
-    private static void validatePageRequest(int page, Page<ArticleListViewResponse> articles) {
-        if (page >= articles.getTotalPages()) {
+    private static <T> void validatePageRequest(int page, Page<T> result) {
+        if (result.getTotalPages() == 0) {
+            if (page > 1) {
+                throw new IllegalArgumentException("Wrong Page Request");
+            }
+        }
+
+        else if (page > result.getTotalPages()) {
             throw new IllegalArgumentException("Wrong Page Request");
         }
-    }
-
-    @GetMapping("/board/{id}")
-    public String getArticle(@PathVariable Long id, Model model) {
-
-        Article article = articleService.lookUpArticle(id);
-        model.addAttribute("article", ArticleViewResponse.from(article));
-
-        return "article";
     }
 
     @GetMapping("/board/new-article")
@@ -98,19 +123,17 @@ public class BoardViewController {
 
     private void modifyArticle(Long id, Model model) {
         Article article = articleQueryService.findById(id);
-        model.addAttribute("article", ArticleWriteResponse.from(article));
+        model.addAttribute("article", ArticleResponse.Write.from(article));
 
     }
 
     private void createArticle(Model model) {
-        model.addAttribute("article", ArticleWriteResponse.empty());
+        model.addAttribute("article", ArticleResponse.Write.empty());
     }
-
-
 
     @GetMapping("/board/{articleId}/modifying-comment")
     public String modifyComment(@PathVariable Long articleId, @RequestParam Long id, Model model) {
-        Comment comment = commentQueryService.getCommentForModifying(id, articleId);
+        Comment comment = commentQueryService.getCommentForUpdateView(id, articleId);
         model.addAttribute("comment", CommentViewResponse.from(comment));
 
         return "modifyComment";
@@ -120,5 +143,6 @@ public class BoardViewController {
     public ArticleSearchType[] articleSearchTypes() {
         return ArticleSearchType.values();
     }
+
 
 }

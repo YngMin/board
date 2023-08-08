@@ -23,14 +23,14 @@ public class Article extends BaseEntity {
     @Column(nullable = false)
     private String title;
 
-    @Column(nullable = false)
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User author;
 
-    @Column(nullable = false)
+    @Column(name = "views", nullable = false)
     private long view = 0L;
 
     @OneToMany(mappedBy = "article", cascade = CascadeType.REMOVE)

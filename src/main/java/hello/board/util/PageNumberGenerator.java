@@ -21,6 +21,10 @@ public final class PageNumberGenerator {
 
     public static PageNumberGenerator build(int pageNumber, int size, int totalPage) {
 
+        if (totalPage == 0) {
+            return new PageNumberGenerator(1, List.of(1), 1);
+        }
+
         int defaultPrevPage = defaultPrevPage(pageNumber, size);
         int startPage = getStartPage(defaultPrevPage);
         int prevPage = finalPrevPage(defaultPrevPage);

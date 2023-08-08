@@ -3,16 +3,19 @@ package hello.board.dto.api;
 import hello.board.domain.Comment;
 import hello.board.dto.service.CommentServiceDto;
 import jakarta.validation.constraints.NotEmpty;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-public abstract class CommentApiDto {
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public final class CommentApiDto {
 
     @Getter
     @Setter
-    public static class SaveRequest {
+    public static final class SaveRequest {
 
         @NotEmpty
         private String content;
@@ -23,7 +26,7 @@ public abstract class CommentApiDto {
     }
 
     @Getter
-    public static class SaveResponse {
+    public static final class SaveResponse {
 
         private final Long id;
 
@@ -37,7 +40,7 @@ public abstract class CommentApiDto {
     }
 
     @Getter
-    public static class FindResponse {
+    public static final class FindResponse {
 
         private final Long id;
         private final String content;
@@ -50,13 +53,13 @@ public abstract class CommentApiDto {
         }
 
         public static FindResponse from(Comment comment) {
-            return new FindResponse(comment.getId(), comment.getContent(), comment.getAuthor().getUsername());
+            return new FindResponse(comment.getId(), comment.getContent(), comment.getAuthor().getName());
         }
     }
 
     @Getter
     @Setter
-    public static class UpdateRequest {
+    public static final class UpdateRequest {
 
         @NotEmpty
         private String content;
@@ -67,7 +70,7 @@ public abstract class CommentApiDto {
     }
 
     @Getter
-    public static class UpdateResponse {
+    public static final class UpdateResponse {
 
         private final String content;
         private final LocalDateTime modifiedAt;

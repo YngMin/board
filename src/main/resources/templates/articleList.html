@@ -6,26 +6,30 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
 </head>
 <body>
+<div class="d-flex justify-content-end bg-light px-5 py-3">
+    <a th:if="${user.id == null}" th:href="@{/login}">로그인</a>
+    <a th:if="${user.id != null}" th:href="@{/logout}">로그아웃</a>
+</div>
 <div class="p-5 mb-5 text-center</> bg-light">
     <h1 class="mb-3">My Community</h1>
-    <h4 class="mb-3">Welcome!</h4>
+    <h4 class="mb-3" th:if="${user.id == null}">환영합니다!</h4>
+    <h4 class="mb-3" th:if="${user.id != null}" th:text="|${user.username} 님, 환영합니다!|">환영합니다!</h4>
 </div>
-
 <div class="container">
     <div class="row">
-        <div class="col">
+        <div class="col d-flex justify-content-start">
             <button type="button" id="new-article-btn"
                     th:onclick="|location.href='@{/board/new-article}'|"
-                    class="btn btn-primary btn-sm mb-3">글 등록</button>
+                    class="btn btn-primary btn-sm mb-3">글 쓰기</button>
         </div>
-        <div class="col">
+        <div class="col d-flex justify-content-end">
             <form th:form th:object="${cond}">
-                <label th:for="*{type}" class="form-label">유형</label>
+                <label th:for="type" class="form-label">유형</label>
                 <select th:field="*{type}" class="form-select">
                     <option th:each="type : ${articleSearchTypeList}" th:value="${type}" th:text="${type.kor}"></option>
                 </select>
-                <label th:for="*{keyword}" class="form-label">검색</label>
-                <input type="text" th:field="*{keyword}" placeholder="검색어">
+                <label th:for="keyword" class="form-label">검색</label>
+                <input type="text" th:field="*{keyword}" th:value="*{keyword}" placeholder="검색어">
                 <button type="submit" class="btn btn-secondary btn-sm mb-3">검색</button>
             </form>
         </div>
@@ -34,10 +38,12 @@
 
     <div class="row-6" th:each="article : ${articles}">
         <div class="card">
-            <div class="card-header" th:text="|Posted on: ${#temporals.format(article.createdAt, 'yyyy-MM-dd HH:mm')} Author: ${article.author} View: ${article.view}|">
+            <div class="card-header d-flex justify-content-between">
+                <span th:text="|게시일: ${#temporals.format(article.createdAt, 'yyyy-MM-dd HH:mm')} 작성자: ${article.author}|"></span>
+                <span th:text="|조회수: ${article.view}|"></span>
             </div>
             <div class="card-body">
-                <a class="card-title" th:text="${article.title}" th:href="@{/board/{id}(id=${article.id})}"></a>
+                <a class="card-title h4" th:text="${article.title}" th:href="@{/board/{id}(id=${article.id})}"></a>
             </div>
         </div>
         <br>
@@ -45,18 +51,16 @@
 
     <hr class="my-4">
 
-    <div class="row container">
-        <div class="col">
+    <div class="row">
+        <div class="col d-flex justify-content-center">
             <ul class="pagination">
-                <li class="page-item"><a class="page-link" th:href="@{/board?page={prev}(prev=${prevNumber})}">Previous</a></li>
-                <li class="page-item" th:each="num: ${pageNumbers}"><a class="page-link" th:href="@{/board?page={pageNum}(pageNum=${num})}" th:text="${num}"></a></li>
-                <li class="page-item"><a class="page-link" th:href="@{/board?page={next}(next=${nextNumber})}">Next</a></li>
+                <li class="page-item"><a class="page-link" th:href="@{/board?page={prev}(prev=${prevNumber}, keyword=${cond.keyword}, type=${cond.type})}">이전</a></li>
+                <li class="page-item" th:each="num: ${pageNumbers}"><a class="page-link" th:href="@{/board?page={pageNum}(pageNum=${num}, keyword=${cond.keyword}, type=${cond.type})}" th:text="${num}"></a></li>
+                <li class="page-item"><a class="page-link" th:href="@{/board?page={next}(next=${nextNumber}, keyword=${cond.keyword}, type=${cond.type})}">다음</a></li>
             </ul>
         </div>
     </div>
 </div>
 
-<script src="/js/token.js"></script>
 <script src="/js/article.js"></script>
-<!--<script src="/js/sendAccessToken.js"></script>-->
 </body>

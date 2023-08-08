@@ -1,20 +1,21 @@
 package hello.board.web.controller.api;
 
 import hello.board.domain.Comment;
-import hello.board.dto.api.Result;
+import hello.board.domain.User;
 import hello.board.exception.BindingErrorException;
+import hello.board.exception.NeedLoginException;
 import hello.board.service.CommentService;
 import hello.board.service.query.CommentQueryService;
 import hello.board.web.annotation.Login;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 import static hello.board.dto.api.CommentApiDto.*;
 
@@ -27,25 +28,26 @@ public class CommentApiController {
     private final CommentQueryService commentQueryService;
 
     @PostMapping("/api/articles/{articleId}/comments")
-    public ResponseEntity<SaveResponse> addComment(@PathVariable Long articleId,
-                                                   @RequestBody @Valid SaveRequest request,
-                                                   BindingResult bindingResult,
-                                                   @Login Long userId) {
+    public ResponseEntity<SaveResponse> addComment(@RequestBody @Valid SaveRequest request, BindingResult bindingResult,
+                                                   @Login User user, @PathVariable Long articleId) {
 
+        validateUser(user);
         handleBindingError(bindingResult);
 
-        Long id = commentService.save(articleId, userId, request.toDto());
+        Long id = commentService.save(articleId, user.getId(), request.toDto());
         return ResponseEntity.status(HttpStatus.CREATED)
                         .body(SaveResponse.create(id));
     }
 
     @GetMapping("/api/articles/{articleId}/comments")
-    public ResponseEntity<Result<FindResponse>> getComments(@PathVariable Long articleId) {
-        List<FindResponse> comments = commentQueryService.findCommentsOfArticle(articleId).stream()
-                .map(FindResponse::from)
-                .toList();
+    public ResponseEntity<Page<FindResponse>> getComments(@RequestParam(defaultValue = "1") int page,
+                                                            @RequestParam(defaultValue = "10") int size,
+                                                            @PathVariable Long articleId) {
 
-        return ResponseEntity.ok(Result.of(comments));
+        Page<FindResponse> comments = commentQueryService.findByArticleId(articleId, PageRequest.of(page, size))
+                .map(FindResponse::from);
+
+        return ResponseEntity.ok(comments);
     }
 
     @GetMapping("/api/articles/{articleId}/comments/{commentId}")
@@ -56,23 +58,23 @@ public class CommentApiController {
     }
 
     @PutMapping("/api/articles/{articleId}/comments/{commentId}")
-    public ResponseEntity<UpdateResponse> updateComment(@PathVariable Long articleId,
-                                                        @PathVariable Long commentId,
-                                                        @RequestBody @Valid UpdateRequest request,
-                                                        BindingResult bindingResult,
-                                                        @Login Long userId) {
+    public ResponseEntity<UpdateResponse> updateComment(@RequestBody @Valid UpdateRequest request, BindingResult bindingResult,
+                                                        @Login User user, @PathVariable Long articleId, @PathVariable Long commentId) {
 
+        validateUser(user);
         handleBindingError(bindingResult);
 
-        commentService.update(commentId, articleId, userId, request.toDto());
+        commentService.update(commentId, articleId, user.getId(), request.toDto());
         Comment comment = commentQueryService.findById(commentId);
 
         return ResponseEntity.ok(UpdateResponse.from(comment));
     }
 
     @DeleteMapping("/api/articles/{articleId}/comments/{commentId}")
-    public ResponseEntity<Void> deleteComment(@PathVariable Long articleId, @PathVariable Long commentId, @Login Long userId) {
-        commentService.delete(commentId, articleId ,userId);
+    public ResponseEntity<Void> deleteComment(@Login User user, @PathVariable Long articleId, @PathVariable Long commentId) {
+
+        validateUser(user);
+        commentService.delete(commentId, articleId ,user.getId());
 
         return ResponseEntity.ok().build();
     }
@@ -83,4 +85,9 @@ public class CommentApiController {
         }
     }
 
+    private static void validateUser(User user) {
+        if (user == null) {
+            throw new NeedLoginException();
+        }
+    }
 }

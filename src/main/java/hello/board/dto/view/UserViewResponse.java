@@ -4,7 +4,7 @@ import hello.board.domain.User;
 import lombok.Getter;
 
 @Getter
-public class UserViewResponse {
+public final class UserViewResponse {
 
     private final Long id;
     private final String username;
@@ -15,7 +15,11 @@ public class UserViewResponse {
     }
 
     public static UserViewResponse from(User user) {
-        return new UserViewResponse(user.getId(), user.getUsername());
+        if (user == null) {
+            return empty();
+        }
+
+        return new UserViewResponse(user.getId(), user.getName());
     }
 
     public static UserViewResponse empty() {

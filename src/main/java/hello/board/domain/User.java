@@ -1,13 +1,12 @@
 package hello.board.domain;
 
-import hello.board.security.oauth2.enums.AuthProvider;
 import jakarta.persistence.*;
 import lombok.*;
 
 @Table(name = "users")
 @Entity
 @Getter
-@ToString(of = {"id", "username", "email"})
+@ToString(of = {"id", "name", "email"})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends BaseEntity {
 
@@ -17,41 +16,26 @@ public class User extends BaseEntity {
     private Long id;
 
     @Column(nullable = false)
-    private String username;
+    private String name;
 
-    @Column(nullable = false, unique = true)
+    @Column(updatable = false, nullable = false, unique = true)
     private String email;
 
     private String password;
 
-    @Enumerated(EnumType.STRING)
-    private AuthProvider authProvider;
-
-    @Builder
-    private User(String username, String email, String password, AuthProvider authProvider) {
-        this.username = username;
+    private User(String name, String email, String password) {
+        this.name = name;
         this.email = email;
         this.password = password;
-        this.authProvider = authProvider;
     }
 
-    public User updateAll(String username, String email, String password) {
-        return updateUsername(username)
-                .updateEmail(email)
-                .updatePassword(password);
-
+    public static User create(String name, String email, String password) {
+        return new User(name, email, password);
     }
 
-    public User updateUsername(String username) {
-        if (username != null) {
-            this.username = username;
-        }
-        return this;
-    }
-
-    public User updateEmail(String email) {
-        if (email != null) {
-            this.email = email;
+    public User updateName(String name) {
+        if (name != null) {
+            this.name = name;
         }
         return this;
     }

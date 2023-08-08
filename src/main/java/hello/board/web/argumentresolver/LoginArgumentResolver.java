@@ -1,61 +1,50 @@
 package hello.board.web.argumentresolver;
 
-import hello.board.exception.NeedLoginException;
-import hello.board.security.jwt.TokenProvider;
+import hello.board.domain.User;
+import hello.board.repository.UserRepository;
 import hello.board.web.annotation.Login;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.MethodParameter;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
+import java.security.Principal;
+
 @Slf4j
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class LoginArgumentResolver implements HandlerMethodArgumentResolver {
 
-    private static final String HEADER_AUTHORIZATION = "Authorization";
-    private static final String TOKEN_PREFIX = "Bearer ";
-
-    private final TokenProvider tokenProvider;
+    private final UserRepository userRepository;
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
         boolean hasLoginAnnotation = parameter.hasParameterAnnotation(Login.class);
-        boolean hasLongType = Long.class.isAssignableFrom(parameter.getParameterType());
+        boolean hasUserType = User.class.isAssignableFrom(parameter.getParameterType());
 
-        return hasLoginAnnotation && hasLongType;
+        return hasLoginAnnotation && hasUserType;
     }
 
     @Override
-    public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
+    public User resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
 
         HttpServletRequest request = (HttpServletRequest) webRequest.getNativeRequest();
 
-        String header = request.getHeader(HEADER_AUTHORIZATION);
-        String token = getAccessToken(header);
+        Principal principal = request.getUserPrincipal();
 
-        return tokenProvider.getUserId(token);
-    }
-
-    private String getAccessToken(String authorizationHeader) {
-        if (doesNotStartWithPrefix(authorizationHeader)) {
+        if (principal == null) {
             return null;
         }
-        return authorizationHeader.substring(TOKEN_PREFIX.length());
+
+        String email = principal.getName();
+
+        return userRepository.findByEmail(email)
+                .orElse(null);
     }
 
-    private static boolean doesNotStartWithPrefix(String authorizationHeader) {
-        return authorizationHeader == null || !authorizationHeader.startsWith(TOKEN_PREFIX);
-    }
-
-    private static Long loginCheck(Long userId) {
-        if (userId == null) {
-            throw new NeedLoginException("Need Login");
-        }
-
-        return userId;
-    }
 }

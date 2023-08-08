@@ -3,13 +3,17 @@ package hello.board.dto.service;
 import hello.board.domain.Article;
 import hello.board.domain.Comment;
 import hello.board.domain.User;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-public abstract class CommentServiceDto {
+import java.time.LocalDateTime;
+
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public final class CommentServiceDto {
 
     @Getter
-    public static class Save {
-
+    public static final class Save {
         private final String content;
 
         private Save(String content) {
@@ -26,7 +30,7 @@ public abstract class CommentServiceDto {
     }
 
     @Getter
-    public static class Update {
+    public static final class Update {
 
         private final String content;
 
@@ -38,5 +42,23 @@ public abstract class CommentServiceDto {
             return new Update(content);
         }
 
+    }
+
+    @Getter
+    public static final class Find {
+
+        private final String content;
+        private final String author;
+        private final LocalDateTime createdAt;
+
+        private Find(String content, String author, LocalDateTime createdAt) {
+            this.content = content;
+            this.author = author;
+            this.createdAt = createdAt;
+        }
+
+        public static Find create(String content, String author, LocalDateTime createdAt) {
+            return new Find(content, author, createdAt);
+        }
     }
 }

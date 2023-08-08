@@ -24,4 +24,8 @@ public class UserQueryService {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> FailToFindEntityException.of("User"));
     }
+
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
+    }
 }
