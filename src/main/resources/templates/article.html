@@ -17,7 +17,7 @@
   <a th:if="${user.id != null}" th:href="@{/logout}">로그아웃</a>
 </div>
 <div class="p-5 mb-5 text-center</> bg-light">
-  <h1 class="mb-3">My Community</h1>
+  <a class="h1 mb-3" th:href="@{/board}">My Community</a>
   <h4 class="mb-3" th:if="${user.id == null}">환영합니다!</h4>
   <h4 class="mb-3" th:if="${user.id != null}" th:text="|${user.username} 님, 환영합니다!|">환영합니다!</h4>
 </div>
