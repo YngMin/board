@@ -19,7 +19,7 @@ public final class ArticleSearchCond {
         this.type = type;
     }
 
-    public static ArticleSearchCond create(String keyword, ArticleSearchType method) {
-        return new ArticleSearchCond(keyword, method);
+    public static ArticleSearchCond create(String keyword, ArticleSearchType type) {
+        return new ArticleSearchCond(keyword, type);
     }
 }

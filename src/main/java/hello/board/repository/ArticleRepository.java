@@ -1,7 +1,10 @@
 package hello.board.repository;
 
 import hello.board.domain.Article;
+import hello.board.dto.service.ArticleServiceDto;
 import hello.board.repository.custom.ArticleSearchRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -24,5 +27,6 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, Article
             where a.id = :id
     """)
     Optional<Article> findWithComments(Long id);
+
 
 }

@@ -5,6 +5,7 @@ import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import hello.board.domain.Article;
 import hello.board.dto.service.search.ArticleSearchCond;
+import hello.board.dto.service.search.ArticleSearchDto;
 import hello.board.dto.service.search.ArticleSearchType;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +16,10 @@ import org.springframework.util.StringUtils;
 
 import java.util.List;
 
+import static com.querydsl.core.types.Projections.constructor;
+import static com.querydsl.jpa.JPAExpressions.select;
 import static hello.board.domain.QArticle.article;
+import static hello.board.domain.QComment.comment;
 import static hello.board.domain.QUser.user;
 
 @Slf4j
@@ -62,6 +66,71 @@ public class ArticleSearchRepositoryImpl implements ArticleSearchRepository {
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
 
+    @Override
+    public Page<ArticleSearchDto> searchUpgradeWithSubQuery(ArticleSearchCond cond, Pageable pageable) {
+
+        List<ArticleSearchDto> content = query
+                .select(
+                        constructor(ArticleSearchDto.class,
+                        article,
+                        select(comment.count())
+                                .from(comment)
+                                .where(comment.article.eq(article))
+                        ))
+                .from(article)
+                .join(article.author, user).fetchJoin()
+                .where(containsKeyword(cond))
+                .orderBy(article.id.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        JPAQuery<Long> countQuery = getCountQuery(cond);
+
+        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+    }
+
+    @Override
+    public Page<ArticleSearchDto> searchUpgradeWithJoin(ArticleSearchCond cond, Pageable pageable) {
+
+        List<ArticleSearchDto> content = query
+                .select(constructor(ArticleSearchDto.class,
+                        article, comment.count()
+                ))
+                .from(article)
+                .join(article.author, user).fetchJoin()
+                .leftJoin(article.comments, comment)
+                .where(containsKeyword(cond))
+                .groupBy(comment.article)
+                .orderBy(article.id.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        JPAQuery<Long> countQuery = getCountQuery(cond);
+
+        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+
+    }
+
+    @Override
+    public Page<Article> searchUpgradeWithFetchJoin(ArticleSearchCond cond, Pageable pageable) {
+        List<Article> content = query
+                .select(article)
+                .from(article)
+                .join(article.author, user).fetchJoin()
+                .leftJoin(article.comments, comment).fetchJoin()
+                .where(containsKeyword(cond))
+                .orderBy(article.id.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        JPAQuery<Long> countQuery = getCountQuery(cond);
+
+        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+    }
+
     private JPAQuery<Long> getBasicCountQuery() {
         return query
                 .select(article.count())
@@ -73,7 +142,7 @@ public class ArticleSearchRepositoryImpl implements ArticleSearchRepository {
         JPAQuery<Long> basicCountQuery = getBasicCountQuery();
 
         if (cond.getType() == ArticleSearchType.AUTHOR) {
-            basicCountQuery.join(article.author, user).fetchJoin();
+            basicCountQuery.join(article.author, user);
         }
 
         return basicCountQuery

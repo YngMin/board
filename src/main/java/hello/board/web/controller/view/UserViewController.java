@@ -1,7 +1,7 @@
 package hello.board.web.controller.view;
 
 import hello.board.dto.form.UserForm;
-import hello.board.service.UserService;
+import hello.board.service.command.UserService;
 import hello.board.service.query.UserQueryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

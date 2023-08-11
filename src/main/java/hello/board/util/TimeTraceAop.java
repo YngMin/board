@@ -1,5 +1,6 @@
 package hello.board.util;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class TimeTraceAop {
 
-    @Around("execution(* hello.board.service..*(..))")
+    @Around("execution(* hello.board.service.query..*(..))")
     public Object execute(ProceedingJoinPoint joinPoint) throws Throwable {
         long start = System.currentTimeMillis();
         log.info("Start={}", joinPoint);
@@ -22,6 +23,9 @@ public class TimeTraceAop {
         } finally {
             long finish = System.currentTimeMillis();
             long timeMs = finish - start;
+
+            TimerUtils.addTime(timeMs);
+
             log.info("End={} {}ms", joinPoint, timeMs);
         }
 

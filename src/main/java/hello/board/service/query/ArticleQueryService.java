@@ -2,6 +2,7 @@ package hello.board.service.query;
 
 import hello.board.domain.Article;
 import hello.board.dto.service.search.ArticleSearchCond;
+import hello.board.dto.service.search.ArticleSearchDto;
 import hello.board.exception.FailToFindEntityException;
 import hello.board.repository.ArticleRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,18 @@ public class ArticleQueryService {
 
     public Page<Article> search(int page, int size) {
         return articleRepository.search(PageRequest.of(page, size));
+    }
+
+    public Page<ArticleSearchDto> searchUpgradeWithSubQuery(ArticleSearchCond cond, int page, int size) {
+        return articleRepository.searchUpgradeWithSubQuery(cond, PageRequest.of(page, size));
+    }
+
+    public Page<ArticleSearchDto> searchUpgradeWithJoin(ArticleSearchCond cond, int page, int size) {
+        return articleRepository.searchUpgradeWithJoin(cond, PageRequest.of(page, size));
+    }
+
+    public Page<Article> searchUpgradeWithFetchJoin(ArticleSearchCond cond, int page, int size) {
+        return articleRepository.searchUpgradeWithFetchJoin(cond, PageRequest.of(page, size));
     }
 
     public Article findWithComments(Long id) {

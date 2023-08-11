@@ -9,7 +9,7 @@ import hello.board.dto.service.search.ArticleSearchType;
 import hello.board.dto.view.ArticleResponse;
 import hello.board.dto.view.CommentViewResponse;
 import hello.board.dto.view.UserViewResponse;
-import hello.board.service.ArticleService;
+import hello.board.service.command.ArticleService;
 import hello.board.service.query.ArticleQueryService;
 import hello.board.service.query.CommentQueryService;
 import hello.board.util.PageNumberGenerator;
@@ -133,7 +133,7 @@ public class BoardViewController {
 
     @GetMapping("/board/{articleId}/modifying-comment")
     public String modifyComment(@PathVariable Long articleId, @RequestParam Long id, Model model) {
-        Comment comment = commentQueryService.getCommentForUpdateView(id, articleId);
+        Comment comment = commentQueryService.findWithArticle(id, articleId);
         model.addAttribute("comment", CommentViewResponse.from(comment));
 
         return "modifyComment";

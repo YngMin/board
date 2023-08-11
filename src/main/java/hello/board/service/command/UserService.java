@@ -1,11 +1,9 @@
-package hello.board.service;
+package hello.board.service.command;
 
 import hello.board.dto.service.UserServiceDto;
-import hello.board.exception.DuplicatedEmailException;
 import hello.board.repository.UserRepository;
 import hello.board.service.query.UserQueryService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
+
     private final UserQueryService userQueryService;
+
     private final PasswordEncoder passwordEncoder;
 
     public Long save(UserServiceDto.Save param) {

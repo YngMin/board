@@ -24,7 +24,7 @@ public class CommentQueryService {
                 .orElseThrow(() -> FailToFindEntityException.of("Comment"));
     }
 
-    public Comment getCommentForUpdateView(Long commentId, Long articleId) {
+    public Comment findWithArticle(Long commentId, Long articleId) {
         Comment comment = commentRepository.findWithArticleById(commentId)
                         .orElseThrow(() -> FailToFindEntityException.of("Comment"));
 
@@ -40,6 +40,12 @@ public class CommentQueryService {
     public Page<Comment> findByArticle(Article article, Pageable pageable) {
         return commentRepository.findByArticle(article, pageable);
     }
+
+    public Page<Comment> findCommentsWithArticle(Long articleId, Pageable pageable) {
+        return commentRepository.findCommentsWithArticle(articleId, pageable);
+    }
+
+    /* ################################################## */
 
     private static void validateArticle(Comment comment, Long articleId) {
         if (!Objects.equals(comment.getArticle().getId(), articleId)) {

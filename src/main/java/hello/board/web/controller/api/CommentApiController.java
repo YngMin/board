@@ -4,7 +4,7 @@ import hello.board.domain.Comment;
 import hello.board.domain.User;
 import hello.board.exception.BindingErrorException;
 import hello.board.exception.NeedLoginException;
-import hello.board.service.CommentService;
+import hello.board.service.command.CommentService;
 import hello.board.service.query.CommentQueryService;
 import hello.board.web.annotation.Login;
 import jakarta.validation.Valid;
@@ -52,7 +52,7 @@ public class CommentApiController {
 
     @GetMapping("/api/articles/{articleId}/comments/{commentId}")
     public ResponseEntity<FindResponse> getComment(@PathVariable Long articleId, @PathVariable Long commentId) {
-        Comment comment = commentService.lookUpComment(commentId, articleId);
+        Comment comment = commentQueryService.findWithArticle(commentId, articleId);
 
         return ResponseEntity.ok(FindResponse.from(comment));
     }

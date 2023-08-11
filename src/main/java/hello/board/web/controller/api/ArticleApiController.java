@@ -4,7 +4,7 @@ import hello.board.domain.Article;
 import hello.board.domain.User;
 import hello.board.exception.BindingErrorException;
 import hello.board.exception.NeedLoginException;
-import hello.board.service.ArticleService;
+import hello.board.service.command.ArticleService;
 import hello.board.service.query.ArticleQueryService;
 import hello.board.web.annotation.Login;
 import jakarta.validation.Valid;
@@ -58,7 +58,7 @@ public class ArticleApiController {
 
     @GetMapping("/api/articles/{id}")
     public ResponseEntity<FindResponse> getArticle(@PathVariable Long id) {
-        Article article = articleService.lookUp(id);
+        Article article = articleService.lookUpNoPaging(id);
 
         return ResponseEntity.ok(FindResponse.from(article));
     }
