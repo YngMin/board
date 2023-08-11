@@ -2,6 +2,7 @@ package hello.board.dto.api;
 
 import hello.board.domain.Article;
 import hello.board.dto.service.ArticleServiceDto;
+import hello.board.dto.service.search.ArticleSearchDto;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
@@ -83,24 +84,30 @@ public final class ArticleApiDto {
         private final String author;
         private final Long view;
         private final LocalDateTime createdAt;
+        private final Long numComments;
 
 
         @Builder
-        private FindListResponse(String title, String content, String author, Long view, LocalDateTime createdAt) {
+        private FindListResponse(String title, String content, String author, Long view, LocalDateTime createdAt, Long numComments) {
             this.title = title;
             this.content = content;
             this.author = author;
             this.view = view;
             this.createdAt = createdAt;
+            this.numComments = numComments;
         }
 
-        public static FindListResponse from(Article article) {
+        public static FindListResponse from(ArticleSearchDto param) {
+
+            Article article = param.getArticle();
+
             return FindListResponse.builder()
                     .title(article.getTitle())
                     .content(article.getContent())
                     .author(article.getAuthor().getName())
                     .view(article.getView())
                     .createdAt(article.getCreatedAt())
+                    .numComments(param.getNumComments())
                     .build();
         }
     }

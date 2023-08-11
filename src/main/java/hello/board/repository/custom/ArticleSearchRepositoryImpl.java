@@ -3,7 +3,6 @@ package hello.board.repository.custom;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import hello.board.domain.Article;
 import hello.board.dto.service.search.ArticleSearchCond;
 import hello.board.dto.service.search.ArticleSearchDto;
 import hello.board.dto.service.search.ArticleSearchType;
@@ -32,11 +31,17 @@ public class ArticleSearchRepositoryImpl implements ArticleSearchRepository {
     }
 
     @Override
-    public Page<Article> search(Pageable pageable) {
-        List<Article> content = query
-                .select(article)
+    public Page<ArticleSearchDto> search(Pageable pageable) {
+        List<ArticleSearchDto> content = query
+                .select(
+                        constructor(ArticleSearchDto.class,
+                                article,
+                                select(comment.count())
+                                        .from(comment)
+                                        .where(comment.article.eq(article))
+                        ))
                 .from(article)
-                .join(article.author, user).fetchJoin()
+                .leftJoin(article.author, user).fetchJoin()
                 .orderBy(article.id.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -48,78 +53,19 @@ public class ArticleSearchRepositoryImpl implements ArticleSearchRepository {
     }
 
     @Override
-    public Page<Article> search(ArticleSearchCond cond, Pageable pageable) {
+    public Page<ArticleSearchDto> search(ArticleSearchCond cond, Pageable pageable) {
         validateCondition(cond);
-
-        List<Article> content = query
-                .select(article)
-                .from(article)
-                .join(article.author, user).fetchJoin()
-                .where(containsKeyword(cond))
-                .orderBy(article.id.desc())
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
-
-        JPAQuery<Long> countQuery = getCountQuery(cond);
-
-        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
-    }
-
-    @Override
-    public Page<ArticleSearchDto> searchUpgradeWithSubQuery(ArticleSearchCond cond, Pageable pageable) {
 
         List<ArticleSearchDto> content = query
                 .select(
                         constructor(ArticleSearchDto.class,
-                        article,
-                        select(comment.count())
-                                .from(comment)
-                                .where(comment.article.eq(article))
+                                article,
+                                select(comment.count())
+                                        .from(comment)
+                                        .where(comment.article.eq(article))
                         ))
                 .from(article)
-                .join(article.author, user).fetchJoin()
-                .where(containsKeyword(cond))
-                .orderBy(article.id.desc())
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
-
-        JPAQuery<Long> countQuery = getCountQuery(cond);
-
-        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
-    }
-
-    @Override
-    public Page<ArticleSearchDto> searchUpgradeWithJoin(ArticleSearchCond cond, Pageable pageable) {
-
-        List<ArticleSearchDto> content = query
-                .select(constructor(ArticleSearchDto.class,
-                        article, comment.count()
-                ))
-                .from(article)
-                .join(article.author, user).fetchJoin()
-                .leftJoin(article.comments, comment)
-                .where(containsKeyword(cond))
-                .groupBy(comment.article)
-                .orderBy(article.id.desc())
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
-
-        JPAQuery<Long> countQuery = getCountQuery(cond);
-
-        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
-
-    }
-
-    @Override
-    public Page<Article> searchUpgradeWithFetchJoin(ArticleSearchCond cond, Pageable pageable) {
-        List<Article> content = query
-                .select(article)
-                .from(article)
-                .join(article.author, user).fetchJoin()
-                .leftJoin(article.comments, comment).fetchJoin()
+                .leftJoin(article.author, user).fetchJoin()
                 .where(containsKeyword(cond))
                 .orderBy(article.id.desc())
                 .offset(pageable.getOffset())

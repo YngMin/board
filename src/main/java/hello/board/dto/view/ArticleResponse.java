@@ -3,6 +3,7 @@ package hello.board.dto.view;
 import hello.board.domain.Article;
 import hello.board.domain.Comment;
 import hello.board.dto.service.ArticleServiceDto;
+import hello.board.dto.service.search.ArticleSearchDto;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -62,23 +63,28 @@ public final class ArticleResponse {
         private final String author;
         private final LocalDateTime createdAt;
         private final Long view;
+        private final Long numComments;
 
         @Builder
-        private ListView(Long id, String title, String author, LocalDateTime createdAt, Long view) {
+        private ListView(Long id, String title, String author, LocalDateTime createdAt, Long view, Long numComments) {
             this.id = id;
             this.title = title;
             this.author = author;
             this.createdAt = createdAt;
             this.view = view;
+            this.numComments = numComments;
         }
 
-        public static ListView from(Article article) {
+        public static ListView from(ArticleSearchDto param) {
+            Article article = param.getArticle();
+
             return ListView.builder()
                     .id(article.getId())
                     .title(article.getTitle())
                     .author(article.getAuthor().getName())
                     .createdAt(article.getCreatedAt())
                     .view(article.getView())
+                    .numComments(param.getNumComments())
                     .build();
         }
     }

@@ -58,7 +58,7 @@ public class ArticleApiController {
 
     @GetMapping("/api/articles/{id}")
     public ResponseEntity<FindResponse> getArticle(@PathVariable Long id) {
-        Article article = articleService.lookUpNoPaging(id);
+        Article article = articleService.lookUpWithAllComments(id);
 
         return ResponseEntity.ok(FindResponse.from(article));
     }

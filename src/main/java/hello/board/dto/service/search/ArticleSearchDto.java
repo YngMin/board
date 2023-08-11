@@ -7,10 +7,10 @@ import lombok.Getter;
 public class ArticleSearchDto {
 
     private final Article article;
-    private final Long numberOfComments;
+    private final Long numComments;
 
-    public ArticleSearchDto(Article article, Long numberOfComments) {
+    public ArticleSearchDto(Article article, Long numComments) {
         this.article = article;
-        this.numberOfComments = numberOfComments == null ? 0 : numberOfComments;
+        this.numComments = numComments == null ? 0 : numComments;
     }
 }

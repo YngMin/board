@@ -1,12 +1,14 @@
 package hello.board.service.command;
 
-import hello.board.dto.service.UserServiceDto;
 import hello.board.repository.UserRepository;
 import hello.board.service.query.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import static hello.board.dto.service.UserServiceDto.Save;
+import static hello.board.dto.service.UserServiceDto.Update;
 
 @Service
 @Transactional
@@ -19,13 +21,13 @@ public class UserService {
 
     private final PasswordEncoder passwordEncoder;
 
-    public Long save(UserServiceDto.Save param) {
+    public Long save(Save param) {
         return userRepository.save(
                 param.toEntity(passwordEncoder))
                 .getId();
     }
 
-    public void update(Long id, UserServiceDto.Update param) {
+    public void update(Long id, Update param) {
         userQueryService.findById(id)
                 .updateName(param.getName())
                 .updatePassword(param.getPassword());

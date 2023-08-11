@@ -3,7 +3,6 @@ package hello.board.service.command;
 import hello.board.domain.Article;
 import hello.board.domain.Comment;
 import hello.board.domain.User;
-import hello.board.dto.service.CommentServiceDto;
 import hello.board.exception.NoAuthorityException;
 import hello.board.repository.CommentRepository;
 import hello.board.service.query.ArticleQueryService;
@@ -14,6 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Objects;
+
+import static hello.board.dto.service.CommentServiceDto.Save;
+import static hello.board.dto.service.CommentServiceDto.Update;
 
 @Service
 @Transactional
@@ -26,14 +28,14 @@ public class CommentService {
     private final ArticleQueryService articleQueryService;
     private final CommentQueryService commentQueryService;
 
-    public Long save(Long articleId, Long userId, CommentServiceDto.Save param) {
+    public Long save(Long articleId, Long userId, Save param) {
         Article article = articleQueryService.findById(articleId);
-        User user = userQueryService.findById(userId);
+        User author = userQueryService.findById(userId);
 
-        return commentRepository.save(param.toEntity(article, user)).getId();
+        return commentRepository.save(param.toEntity(article, author)).getId();
     }
 
-    public void update(Long commentId, Long articleId, Long userId, CommentServiceDto.Update param) {
+    public void update(Long commentId, Long articleId, Long userId, Update param) {
         Comment comment = commentQueryService.findWithArticle(commentId, articleId);
 
         validateAuthor(comment, userId);
@@ -52,9 +54,7 @@ public class CommentService {
         commentRepository.delete(comment);
     }
 
-
     /* ################################################### */
-
 
     private static void validateAuthor(Comment comment, Long userId) {
         if (!Objects.equals(comment.getAuthor().getId(), userId)) {

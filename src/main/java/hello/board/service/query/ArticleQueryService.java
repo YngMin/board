@@ -24,32 +24,22 @@ public class ArticleQueryService {
                 .orElseThrow(() -> FailToFindEntityException.of("Article"));
     }
 
-    public Page<Article> search(ArticleSearchCond cond, int page, int size) {
+    public Page<ArticleSearchDto> search(ArticleSearchCond cond, int page, int size) {
         return isConditionEmpty(cond)
                 ? articleRepository.search(PageRequest.of(page, size))
                 : articleRepository.search(cond, PageRequest.of(page, size));
     }
 
-    public Page<Article> search(int page, int size) {
+    public Page<ArticleSearchDto> search(int page, int size) {
         return articleRepository.search(PageRequest.of(page, size));
-    }
-
-    public Page<ArticleSearchDto> searchUpgradeWithSubQuery(ArticleSearchCond cond, int page, int size) {
-        return articleRepository.searchUpgradeWithSubQuery(cond, PageRequest.of(page, size));
-    }
-
-    public Page<ArticleSearchDto> searchUpgradeWithJoin(ArticleSearchCond cond, int page, int size) {
-        return articleRepository.searchUpgradeWithJoin(cond, PageRequest.of(page, size));
-    }
-
-    public Page<Article> searchUpgradeWithFetchJoin(ArticleSearchCond cond, int page, int size) {
-        return articleRepository.searchUpgradeWithFetchJoin(cond, PageRequest.of(page, size));
     }
 
     public Article findWithComments(Long id) {
         return articleRepository.findWithComments(id)
                 .orElseThrow(() -> FailToFindEntityException.of("Article"));
     }
+
+    /* ################################################## */
 
     private static boolean isConditionEmpty(ArticleSearchCond cond) {
         return cond == null || !StringUtils.hasText(cond.getKeyword());

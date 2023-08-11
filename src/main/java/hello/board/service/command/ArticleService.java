@@ -3,7 +3,6 @@ package hello.board.service.command;
 import hello.board.domain.Article;
 import hello.board.domain.Comment;
 import hello.board.domain.User;
-import hello.board.dto.service.ArticleServiceDto;
 import hello.board.exception.NoAuthorityException;
 import hello.board.repository.ArticleRepository;
 import hello.board.service.query.ArticleQueryService;
@@ -14,6 +13,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import static hello.board.dto.service.ArticleServiceDto.*;
 
 @Service
 @Transactional
@@ -27,18 +28,18 @@ public class ArticleService {
     private final CommentQueryService commentQueryService;
 
 
-    public Long save(Long userId, ArticleServiceDto.Save param) {
+    public Long save(Long userId, Save param) {
         User user = userQueryService.findById(userId);
         Article article = param.toEntity(user);
 
         return articleRepository.save(article).getId();
     }
 
-    public void update(Long articleId, Long userId, ArticleServiceDto.Update param) {
+    public void update(Long articleId, Long userId, Update param) {
         Article article = articleQueryService.findById(articleId);
         User user = userQueryService.findById(userId);
 
-        validateUser(article, user);
+        validateAuthor(article, user);
 
         if (param != null) {
             article.update(param.getTitle(), param.getContent());
@@ -49,26 +50,17 @@ public class ArticleService {
         Article article = articleQueryService.findById(articleId);
         User user = userQueryService.findById(userId);
 
-        validateUser(article, user);
+        validateAuthor(article, user);
 
         articleRepository.delete(article);
     }
 
-    public Article lookUpNoPaging(Long id) {
+    public Article lookUpWithAllComments(Long id) {
         return articleQueryService.findWithComments(id)
                 .increaseView();
     }
 
-    public ArticleServiceDto.LookUp lookUpWithPaginatedCommentsOld(Long id, int page, int size) {
-        Article article = articleQueryService.findById(id)
-                .increaseView();
-
-        Page<Comment> comments = commentQueryService.findByArticle(article, PageRequest.of(page, size));
-
-        return ArticleServiceDto.LookUp.from(article, comments);
-    }
-
-    public ArticleServiceDto.LookUp lookUpWithPaginatedComments(Long id, int page, int size) {
+    public LookUp lookUpWithPaginatedComments(Long id, int page, int size) {
         Page<Comment> comments = commentQueryService.findCommentsWithArticle(id, PageRequest.of(page, size));
 
         Article article = comments.getContent().stream()
@@ -77,12 +69,12 @@ public class ArticleService {
                 .orElse(articleQueryService.findById(id))
                 .increaseView();
 
-        return ArticleServiceDto.LookUp.from(article, comments);
+        return LookUp.from(article, comments);
     }
 
-    /* ################################# */
+    /* ################################################## */
 
-    private static void validateUser(Article article, User user) throws NoAuthorityException {
+    private static void validateAuthor(Article article, User user) throws NoAuthorityException {
         if (article.getAuthor() != user) {
             throw new NoAuthorityException("You cannot modify what someone else has written");
         }

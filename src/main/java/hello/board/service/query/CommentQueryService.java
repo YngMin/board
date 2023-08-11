@@ -1,6 +1,5 @@
 package hello.board.service.query;
 
-import hello.board.domain.Article;
 import hello.board.domain.Comment;
 import hello.board.exception.FailToFindEntityException;
 import hello.board.repository.CommentRepository;
@@ -35,10 +34,6 @@ public class CommentQueryService {
 
     public Page<Comment> findByArticleId(Long articleId, Pageable pageable) {
         return commentRepository.findByArticleId(articleId, pageable);
-    }
-
-    public Page<Comment> findByArticle(Article article, Pageable pageable) {
-        return commentRepository.findByArticle(article, pageable);
     }
 
     public Page<Comment> findCommentsWithArticle(Long articleId, Pageable pageable) {
