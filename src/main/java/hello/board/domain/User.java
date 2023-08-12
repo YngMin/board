@@ -40,10 +40,9 @@ public class User extends BaseEntity {
         return this;
     }
 
-    public User updatePassword(String password) {
+    public void updatePassword(String password) {
         if (password != null) {
             this.password = password;
         }
-        return this;
     }
 }

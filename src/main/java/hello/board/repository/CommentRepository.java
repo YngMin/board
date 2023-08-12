@@ -12,8 +12,9 @@ import java.util.Optional;
 
 public interface CommentRepository extends JpaRepository<Comment, Long> {
     @Override
+    @NonNull
     @EntityGraph(attributePaths = {"author"})
-    @NonNull Optional<Comment> findById(@NonNull Long id);
+    Optional<Comment> findById(@NonNull Long id);
 
     @EntityGraph(attributePaths = {"author"})
     Page<Comment> findByArticleId(Long articleId, Pageable pageable);
@@ -29,6 +30,5 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
             where c.article.id = :articleId
     """)
     Page<Comment> findCommentsWithArticle(Long articleId, Pageable pageable);
-
 
 }

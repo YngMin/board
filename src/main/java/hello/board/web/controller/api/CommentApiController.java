@@ -9,7 +9,6 @@ import hello.board.service.query.CommentQueryService;
 import hello.board.web.annotation.Login;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -19,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 
 import static hello.board.dto.api.CommentApiDto.*;
 
-@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class CommentApiController {

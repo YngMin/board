@@ -42,8 +42,6 @@ public final class PageNumberGenerator {
         return PageNumberGenerator.build(page.getNumber(), page.getSize(), page.getTotalPages());
     }
 
-
-
     private static int getStartPage(int defaultPrevPage) {
         return defaultPrevPage + 1;
     }

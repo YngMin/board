@@ -14,6 +14,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
+
 import static hello.board.dto.service.ArticleServiceDto.*;
 
 @Service
@@ -37,9 +39,8 @@ public class ArticleService {
 
     public void update(Long articleId, Long userId, Update param) {
         Article article = articleQueryService.findById(articleId);
-        User user = userQueryService.findById(userId);
 
-        validateAuthor(article, user);
+        validateAuthor(article, userId);
 
         if (param != null) {
             article.update(param.getTitle(), param.getContent());
@@ -48,9 +49,8 @@ public class ArticleService {
 
     public void delete(Long articleId, Long userId) {
         Article article = articleQueryService.findById(articleId);
-        User user = userQueryService.findById(userId);
 
-        validateAuthor(article, user);
+        validateAuthor(article, userId);
 
         articleRepository.delete(article);
     }
@@ -74,9 +74,9 @@ public class ArticleService {
 
     /* ################################################## */
 
-    private static void validateAuthor(Article article, User user) throws NoAuthorityException {
-        if (article.getAuthor() != user) {
-            throw new NoAuthorityException("You cannot modify what someone else has written");
+    private static void validateAuthor(Article article, Long userId) throws NoAuthorityException {
+        if (!Objects.equals(article.getAuthor().getId(), userId)) {
+            throw new NoAuthorityException("You do not have authority!");
         }
     }
 }

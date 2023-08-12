@@ -28,9 +28,11 @@ public class UserService {
     }
 
     public void update(Long id, Update param) {
-        userQueryService.findById(id)
-                .updateName(param.getName())
-                .updatePassword(param.getPassword());
+        if (param != null) {
+            userQueryService.findById(id)
+                    .updateName(param.getName())
+                    .updatePassword(param.getPassword());
+        }
     }
 
 }

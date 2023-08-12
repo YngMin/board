@@ -7,7 +7,6 @@ import hello.board.dto.service.search.ArticleSearchCond;
 import hello.board.dto.service.search.ArticleSearchDto;
 import hello.board.dto.service.search.ArticleSearchType;
 import jakarta.persistence.EntityManager;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
@@ -21,7 +20,6 @@ import static hello.board.domain.QArticle.article;
 import static hello.board.domain.QComment.comment;
 import static hello.board.domain.QUser.user;
 
-@Slf4j
 public class ArticleSearchRepositoryImpl implements ArticleSearchRepository {
 
     private final JPAQueryFactory query;
@@ -39,7 +37,8 @@ public class ArticleSearchRepositoryImpl implements ArticleSearchRepository {
                                 select(comment.count())
                                         .from(comment)
                                         .where(comment.article.eq(article))
-                        ))
+                        )
+                )
                 .from(article)
                 .leftJoin(article.author, user).fetchJoin()
                 .orderBy(article.id.desc())
@@ -54,6 +53,7 @@ public class ArticleSearchRepositoryImpl implements ArticleSearchRepository {
 
     @Override
     public Page<ArticleSearchDto> search(ArticleSearchCond cond, Pageable pageable) {
+
         validateCondition(cond);
 
         List<ArticleSearchDto> content = query
@@ -97,15 +97,17 @@ public class ArticleSearchRepositoryImpl implements ArticleSearchRepository {
 
     private BooleanExpression containsKeyword(ArticleSearchCond cond) {
 
-        if (!StringUtils.hasText(cond.getKeyword())) {
+        String keyword = cond.getKeyword();
+
+        if (!StringUtils.hasText(keyword)) {
             return null;
         }
 
         return switch (cond.getType()) {
-            case TITLE -> article.title.contains(cond.getKeyword());
-            case CONTENT -> article.content.contains(cond.getKeyword());
-            case TITLE_AND_CONTENT -> article.title.contains(cond.getKeyword()).or(article.content.contains(cond.getKeyword()));
-            case AUTHOR -> article.author.name.contains(cond.getKeyword());
+            case TITLE -> article.title.contains(keyword);
+            case CONTENT -> article.content.contains(keyword);
+            case TITLE_AND_CONTENT -> article.title.contains(keyword).or(article.content.contains(keyword));
+            case AUTHOR -> article.author.name.contains(keyword);
         };
     }
 

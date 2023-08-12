@@ -58,7 +58,7 @@ public class CommentService {
 
     private static void validateAuthor(Comment comment, Long userId) {
         if (!Objects.equals(comment.getAuthor().getId(), userId)) {
-            throw new NoAuthorityException();
+            throw new NoAuthorityException("You do not have authority!");
         }
     }
 

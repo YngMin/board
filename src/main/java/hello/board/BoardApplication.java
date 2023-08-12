@@ -1,9 +1,9 @@
 package hello.board;
 
+import hello.board.repository.ArticleRepository;
 import hello.board.repository.CommentRepository;
 import hello.board.repository.UserRepository;
-import hello.board.repository.ArticleRepository;
-import lombok.RequiredArgsConstructor;
+import hello.board.util.TimeTraceAop;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -21,18 +21,17 @@ public class BoardApplication {
     }
 
     @Configuration
-    @RequiredArgsConstructor
     static class Config {
-
-        private final UserRepository userRepository;
-        private final ArticleRepository articleRepository;
-        private final CommentRepository commentRepository;
-        private final PasswordEncoder passwordEncoder;
-
         @Profile("local")
         @Bean
-        public TestDataInit testDataInit() {
+        public TestDataInit testDataInit(UserRepository userRepository, ArticleRepository articleRepository, CommentRepository commentRepository, PasswordEncoder passwordEncoder) {
             return new TestDataInit(userRepository, articleRepository, commentRepository, passwordEncoder);
+        }
+
+        @Profile({"local", "test"})
+        @Bean
+        public TimeTraceAop timeTraceAop() {
+            return new TimeTraceAop();
         }
     }
 

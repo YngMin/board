@@ -2,6 +2,7 @@ package hello.board.web.controller.api;
 
 import hello.board.domain.Article;
 import hello.board.domain.User;
+import hello.board.dto.service.search.ArticleSearchCond;
 import hello.board.exception.BindingErrorException;
 import hello.board.exception.NeedLoginException;
 import hello.board.service.command.ArticleService;
@@ -9,7 +10,6 @@ import hello.board.service.query.ArticleQueryService;
 import hello.board.web.annotation.Login;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 
 import static hello.board.dto.api.ArticleApiDto.*;
 
-@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class ArticleApiController {
@@ -33,24 +32,19 @@ public class ArticleApiController {
 
         handleBindingError(bindingResult);
 
-        Long articleId = articleService.save(user.getId(), request.toDto());
+        Long id = articleService.save(user.getId(), request.toDto());
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(SaveResponse.create(articleId));
-    }
-
-
-    private static void handleBindingError(BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
-            throw BindingErrorException.of(bindingResult.getFieldErrors(), bindingResult.getGlobalErrors());
-        }
+                .body(SaveResponse.create(id));
     }
 
     @GetMapping("/api/articles")
     public ResponseEntity<Page<FindListResponse>> getArticles(@RequestParam(defaultValue = "1") int page,
-                                                                @RequestParam(defaultValue = "10") int size
-    ) {
-        Page<FindListResponse> articles = articleQueryService.search(convertPageNumber(page), size)
+                                                              @RequestParam(defaultValue = "10") int size,
+                                                              @ModelAttribute("cond") ArticleSearchCond cond
+                                                              ) {
+
+        Page<FindListResponse> articles = articleQueryService.search(cond, toZeroStartIndex(page), size)
                 .map(FindListResponse::from);
 
         return ResponseEntity.ok(articles);
@@ -63,30 +57,38 @@ public class ArticleApiController {
         return ResponseEntity.ok(FindResponse.from(article));
     }
 
-    @PutMapping("/api/articles/{articleId}")
+    @PutMapping("/api/articles/{id}")
     public ResponseEntity<UpdateResponse> updateArticle(@RequestBody @Valid UpdateRequest request, BindingResult bindingResult,
-                                                        @Login User user, @PathVariable Long articleId) {
+                                                        @Login User user, @PathVariable Long id) {
 
         validateUser(user);
 
         handleBindingError(bindingResult);
 
-        articleService.update(articleId, user.getId(), request.toDto());
-        Article updatedArticle = articleQueryService.findById(articleId);
+        articleService.update(id, user.getId(), request.toDto());
+        Article updatedArticle = articleQueryService.findById(id);
 
         return ResponseEntity.ok(UpdateResponse.from(updatedArticle));
     }
 
-    @DeleteMapping("/api/articles/{articleId}")
-    public ResponseEntity<Void> deleteArticle(@Login User user, @PathVariable Long articleId) {
+    @DeleteMapping("/api/articles/{id}")
+    public ResponseEntity<Void> deleteArticle(@Login User user, @PathVariable Long id) {
 
         validateUser(user);
 
-        articleService.delete(articleId, user.getId());
+        articleService.delete(id, user.getId());
         return ResponseEntity.ok().build();
     }
 
-    private static int convertPageNumber(int page) {
+    /* ##################################################### */
+
+    private static void handleBindingError(BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            throw BindingErrorException.of(bindingResult.getFieldErrors(), bindingResult.getGlobalErrors());
+        }
+    }
+
+    private static int toZeroStartIndex(int page) {
         return Integer.max(0, page - 1);
     }
 
