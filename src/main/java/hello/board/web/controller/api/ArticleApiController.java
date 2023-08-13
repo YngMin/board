@@ -52,7 +52,7 @@ public class ArticleApiController {
 
     @GetMapping("/api/articles/{id}")
     public ResponseEntity<FindResponse> getArticle(@PathVariable Long id) {
-        Article article = articleService.lookUpWithAllComments(id);
+        Article article = articleService.lookUp(id);
 
         return ResponseEntity.ok(FindResponse.from(article));
     }

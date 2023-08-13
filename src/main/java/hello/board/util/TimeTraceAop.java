@@ -9,7 +9,7 @@ import org.aspectj.lang.annotation.Aspect;
 @Aspect
 public class TimeTraceAop {
 
-    @Around("execution(* hello.board.service.query..*(..))")
+    @Around("execution(* hello.board.service.command..*(..))")
     public Object execute(ProceedingJoinPoint joinPoint) throws Throwable {
         long start = System.currentTimeMillis();
         log.info("Start={}", joinPoint);

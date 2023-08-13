@@ -3,10 +3,11 @@ package hello.board.service.command;
 import hello.board.domain.Article;
 import hello.board.domain.Comment;
 import hello.board.domain.User;
+import hello.board.dto.service.ArticleCommentFlatDto;
+import hello.board.exception.FailToFindEntityException;
 import hello.board.exception.NoAuthorityException;
 import hello.board.repository.ArticleRepository;
 import hello.board.service.query.ArticleQueryService;
-import hello.board.service.query.CommentQueryService;
 import hello.board.service.query.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -27,8 +28,6 @@ public class ArticleService {
 
     private final UserQueryService userQueryService;
     private final ArticleQueryService articleQueryService;
-    private final CommentQueryService commentQueryService;
-
 
     public Long save(Long userId, Save param) {
         User user = userQueryService.findById(userId);
@@ -55,19 +54,18 @@ public class ArticleService {
         articleRepository.delete(article);
     }
 
-    public Article lookUpWithAllComments(Long id) {
+    public Article lookUp(Long id) {
         return articleQueryService.findWithComments(id)
                 .increaseView();
     }
 
-    public LookUp lookUpWithPaginatedComments(Long id, int page, int size) {
-        Page<Comment> comments = commentQueryService.findCommentsWithArticle(id, PageRequest.of(page, size));
+    public LookUp lookUp(Long id, int page, int size) {
+        Page<ArticleCommentFlatDto> result = articleRepository.findWithComments(id, PageRequest.of(page, size));
 
-        Article article = comments.getContent().stream()
-                .map(Comment::getArticle)
-                .findAny()
-                .orElse(articleQueryService.findById(id))
+        Article article = extractArticleFrom(result)
                 .increaseView();
+
+        Page<Comment> comments = extractCommentsFrom(result);
 
         return LookUp.from(article, comments);
     }
@@ -78,5 +76,19 @@ public class ArticleService {
         if (!Objects.equals(article.getAuthor().getId(), userId)) {
             throw new NoAuthorityException("You do not have authority!");
         }
+    }
+
+    private static Article extractArticleFrom(Page<ArticleCommentFlatDto> result) {
+        return result.getContent().stream()
+                .map(ArticleCommentFlatDto::getArticle)
+                .findAny()
+                .orElseThrow(() -> FailToFindEntityException.of("Article"));
+    }
+
+    private static Page<Comment> extractCommentsFrom(Page<ArticleCommentFlatDto> result) {
+        boolean noComment = result.stream()
+                .anyMatch(dto -> dto.getComment() == null);
+
+        return noComment ? Page.empty() : result.map(ArticleCommentFlatDto::getComment);
     }
 }

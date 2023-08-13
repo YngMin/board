@@ -23,4 +23,6 @@ public final class CommentViewResponse {
     public static CommentViewResponse from(Comment comment) {
         return new CommentViewResponse(comment.getId(), comment.getContent(), comment.getAuthor().getName(), comment.getCreatedAt());
     }
+
+
 }

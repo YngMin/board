@@ -47,7 +47,7 @@ public class BoardViewController {
                               @Login User user,
                               Model model) {
 
-        Page<ListView> articles = articleQueryService.search(cond, toZeroStartIdx(page), ARTICLE_PAGE_SIZE)
+        Page<ListView> articles = articleQueryService.search(cond, toZeroStartIndex(page), ARTICLE_PAGE_SIZE)
                 .map(ListView::from);
 
         validatePageRequest(page, articles);
@@ -62,7 +62,7 @@ public class BoardViewController {
 
     @GetMapping("/board/{id}")
     public String getArticle(@RequestParam(defaultValue = "1") int page, @Login User user, @PathVariable Long id, Model model) {
-        LookUp article = articleService.lookUpWithPaginatedComments(id, toZeroStartIdx(page), COMMENT_PAGE_SIZE);
+        LookUp article = articleService.lookUp(id, toZeroStartIndex(page), COMMENT_PAGE_SIZE);
         Page<Comment> comments = article.getComments();
 
         validatePageRequest(page, comments);
@@ -112,7 +112,7 @@ public class BoardViewController {
         model.addAttribute("article", Write.empty());
     }
 
-    private static int toZeroStartIdx(int page) {
+    private static int toZeroStartIndex(int page) {
         if (page <= 0) {
             throw new IllegalArgumentException("Wrong Page Number");
         }
