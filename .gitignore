@@ -35,9 +35,7 @@ out/
 
 ### VS Code ###
 .vscode/
-application.yml
 TestDataInit.javatest\
 test\
 board\
-application.yml
 TestDataInit.java
