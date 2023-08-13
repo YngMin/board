@@ -39,3 +39,6 @@ TestDataInit.javatest\
 test\
 board\
 TestDataInit.java
+LocalConfig.java
+TimerUtils.java
+TimeTraceAop.java
