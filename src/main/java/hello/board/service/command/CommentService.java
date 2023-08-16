@@ -36,7 +36,7 @@ public class CommentService {
     }
 
     public void update(Long commentId, Long articleId, Long userId, Update param) {
-        Comment comment = commentQueryService.findWithArticle(commentId, articleId);
+        Comment comment = commentQueryService.findWithArticle(commentId, articleId);        // This method validates Article
 
         validateAuthor(comment, userId);
 

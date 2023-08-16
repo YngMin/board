@@ -15,6 +15,7 @@ import hello.board.service.query.UserQueryService;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.proxy.HibernateProxy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 import static hello.board.dto.service.ArticleServiceDto.Update;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -78,6 +80,10 @@ class ArticleServiceTest {
         return user;
     }
 
+    private static Predicate<Object> isNotProxy() {
+        return a -> !(a instanceof HibernateProxy);
+    }
+
     @Test
     @DisplayName("저장 성공")
     void save() {
@@ -85,7 +91,7 @@ class ArticleServiceTest {
         User user = createUserAndPersist("user", "test@gmail.com", "1234");
 
         //when
-        Long id = articleService.save(user.getId(), Save.create("title", "content"));
+        final Long id = articleService.save(user.getId(), Save.create("title", "content"));
 
         em.flush();
         em.clear();
@@ -108,6 +114,19 @@ class ArticleServiceTest {
     }
 
     @Test
+    @DisplayName("저장 실패")
+    void save_fail() {
+        //given
+        createUserAndPersist("user", "test@gmail.com", "1234");
+        final Long WRONG_ID = 4444L;
+
+        //when & then
+        assertThatThrownBy(() -> articleService.save(WRONG_ID, Save.create("title", "content")))
+                .as("존재하지 않는 사용자 ID")
+                .isInstanceOf(FailToFindEntityException.class);
+    }
+
+    @Test
     @DisplayName("모든 댓글과 함께 조회 성공")
     void lookUp() {
         //given
@@ -117,7 +136,7 @@ class ArticleServiceTest {
         Article article = Article.create("title", "content", user1);
         em.persist(article);
 
-        Long id = article.getId();
+        final Long id = article.getId();
 
         final int NUMBER_OF_COMMENTS = 10;
         for (int i = 0; i < NUMBER_OF_COMMENTS; i++) {
@@ -150,9 +169,9 @@ class ArticleServiceTest {
 
         //article.author
         User articleAuthor = findArticle.getAuthor();
-        assertThat(articleAuthor.getClass())
+        assertThat(articleAuthor)
                 .as("게시글 작성자 페치 조인 성공")
-                .isEqualTo(User.class);
+                .isNotInstanceOf(HibernateProxy.class);
 
         assertThat(articleAuthor.getName())
                 .as("작성자 이름")
@@ -176,16 +195,14 @@ class ArticleServiceTest {
 
         assertThat(comments)
                 .extracting("article")
-                .extracting("class")
                 .as("게시글 - 댓글 페치 조인 성공")
-                .containsOnly(Article.class);
+                .allMatch(isNotProxy());
 
         //comment.author
         assertThat(comments)
                 .extracting("author")
-                .extracting("class")
                 .as("댓글 작성자 페치 조인 성공")
-                .containsOnly(User.class);
+                .allMatch(isNotProxy());
 
         for (int i = 0; i < comments.size(); i++) {
             User commentAuthor = comments.get(i).getAuthor();
@@ -226,7 +243,7 @@ class ArticleServiceTest {
         Article article = Article.create("title", "content", user1);
         em.persist(article);
 
-        Long id = article.getId();
+        final Long id = article.getId();
 
         final int NUMBER_OF_COMMENTS = 123;
 
@@ -282,7 +299,7 @@ class ArticleServiceTest {
 
         assertThat(articleAuthor.getClass())
                 .as("게시글 작성자 페치 조인 성공")
-                .isEqualTo(User.class);
+                .isNotInstanceOf(HibernateProxy.class);
 
         assertThat(articleAuthor.getName())
                 .as("게시글 작성자 이름")
@@ -293,43 +310,36 @@ class ArticleServiceTest {
         Page<Comment> comments2 = lookUp2.getComments();
         Page<Comment> comments3 = lookUp3.getComments();
 
-        final int startNum1 = getStartNum(PAGE_1, SIZE_1);
-        final int startNum2 = getStartNum(PAGE_2, SIZE_2);
-        final int startNum3 = getStartNum(PAGE_3, SIZE_3);
-
         assertThat(comments1.getContent())
                 .extracting("content")
                 .as("댓글 내용")
-                .containsExactly(getCommentContents(startNum1, SIZE_1));
+                .containsExactly(getCommentContents(PAGE_1, SIZE_1));
 
         assertThat(comments2.getContent())
                 .extracting("content")
                 .as("댓글 내용")
-                .containsExactly(getCommentContents(startNum2, SIZE_2));
+                .containsExactly(getCommentContents(PAGE_2, SIZE_2));
 
         assertThat(comments3.getContent())
                 .extracting("content")
                 .as("댓글 내용")
-                .containsExactly(getCommentContents(startNum3, SIZE_3));
+                .containsExactly(getCommentContents(PAGE_3, SIZE_3));
 
         //comment.author
         assertThat(comments1.getContent())
                 .extracting("author")
-                .extracting("class")
                 .as("댓글 작성자 페치 조인 성공")
-                .containsOnly(User.class);
+                .allMatch(isNotProxy());
 
         assertThat(comments2.getContent())
                 .extracting("author")
-                .extracting("class")
                 .as("댓글 작성자 페치 조인 성공")
-                .containsOnly(User.class);
+                .allMatch(isNotProxy());
 
         assertThat(comments3.getContent())
                 .extracting("author")
-                .extracting("class")
                 .as("댓글 작성자 페치 조인 성공")
-                .containsOnly(User.class);
+                .allMatch(isNotProxy());
     }
 
     @Test
@@ -342,7 +352,7 @@ class ArticleServiceTest {
         Article article = Article.create("title", "content", user1);
         em.persist(article);
 
-        Long id = article.getId();
+        final Long id = article.getId();
 
         final int NUMBER_OF_COMMENTS = 123;
 
@@ -374,11 +384,9 @@ class ArticleServiceTest {
 
     }
 
-    private static int getStartNum(int page, int size) {
-        return page * size;
-    }
+    private static String[] getCommentContents(int page, int size) {
+        int startNum = page * size;
 
-    private static String[] getCommentContents(int startNum, int size) {
         String[] values = new String[size];
         for (int i = 0; i < size; i++) {
             values[i] = "comment " + startNum++;
@@ -392,12 +400,12 @@ class ArticleServiceTest {
     void update() {
         //given
         User user = createUserAndPersist("user", "test@gmail.com", "1234");
-        Long userId = user.getId();
+        final Long userId = user.getId();
 
         Article article = Article.create("title", "content", user);
         em.persist(article);
 
-        Long id = article.getId();
+        final Long id = article.getId();
 
         em.flush();
         em.clear();
@@ -477,8 +485,8 @@ class ArticleServiceTest {
         User user1 = createUserAndPersist("user1", "test1@gmail.com", "12341");
         User user2 = createUserAndPersist("user2", "test2@gmail.com", "12342");
 
-        Long user1Id = user1.getId();
-        Long user2Id = user2.getId();
+        final Long user1Id = user1.getId();
+        final Long user2Id = user2.getId();
 
         Article article1 = Article.create("title1", "content2", user1);
         Article article2 = Article.create("title2", "content2", user2);
@@ -486,8 +494,8 @@ class ArticleServiceTest {
         em.persist(article1);
         em.persist(article2);
 
-        Long id1 = article1.getId();
-        Long id2 = article2.getId();
+        final Long id1 = article1.getId();
+        final Long id2 = article2.getId();
 
         final Long WRONG_ID = 4444L;
 
@@ -564,8 +572,8 @@ class ArticleServiceTest {
         User user1 = createUserAndPersist("user1", "test1@gmail.com", "12341");
         User user2 = createUserAndPersist("user2", "test2@gmail.com", "12342");
 
-        Long user1Id = user1.getId();
-        Long user2Id = user2.getId();
+        final Long user1Id = user1.getId();
+        final Long user2Id = user2.getId();
 
         Article article1 = Article.create("title1", "content2", user1);
         Article article2 = Article.create("title2", "content2", user2);
@@ -573,8 +581,8 @@ class ArticleServiceTest {
         em.persist(article1);
         em.persist(article2);
 
-        Long id1 = article1.getId();
-        Long id2 = article2.getId();
+        final Long id1 = article1.getId();
+        final Long id2 = article2.getId();
 
         final Long WRONG_ID = 4444L;
 

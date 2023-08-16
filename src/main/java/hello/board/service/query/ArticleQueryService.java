@@ -4,6 +4,7 @@ import hello.board.domain.Article;
 import hello.board.dto.service.search.ArticleSearchCond;
 import hello.board.dto.service.search.ArticleSearchDto;
 import hello.board.exception.FailToFindEntityException;
+import hello.board.exception.WrongPageRequestException;
 import hello.board.repository.ArticleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,12 +26,14 @@ public class ArticleQueryService {
     }
 
     public Page<ArticleSearchDto> search(ArticleSearchCond cond, int page, int size) {
+        validatePageRequest(page, size);
         return isConditionEmpty(cond)
                 ? articleRepository.search(PageRequest.of(page, size))
                 : articleRepository.search(cond, PageRequest.of(page, size));
     }
 
     public Page<ArticleSearchDto> search(int page, int size) {
+        validatePageRequest(page, size);
         return articleRepository.search(PageRequest.of(page, size));
     }
 
@@ -43,5 +46,11 @@ public class ArticleQueryService {
 
     private static boolean isConditionEmpty(ArticleSearchCond cond) {
         return cond == null || !StringUtils.hasText(cond.getKeyword());
+    }
+
+    private static void validatePageRequest(int page, int size) {
+        if (page < 0 || size < 1) {
+            throw WrongPageRequestException.of(page, size);
+        }
     }
 }
