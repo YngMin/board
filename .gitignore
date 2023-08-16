@@ -35,9 +35,6 @@ out/
 
 ### VS Code ###
 .vscode/
-TestDataInit.javatest\
-test\
-board\
 TestDataInit.java
 TimerUtils.java
 TimeTraceAop.java
