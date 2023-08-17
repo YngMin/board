@@ -31,8 +31,11 @@ public class UserService {
         if (param != null) {
             userQueryService.findById(id)
                     .updateName(param.getName())
-                    .updatePassword(param.getPassword());
+                    .updatePassword(encodeRawPassword(param.getPassword()));
         }
     }
 
+    private String encodeRawPassword(String rawPassword) {
+        return rawPassword == null ? null : passwordEncoder.encode(rawPassword);
+    }
 }

@@ -42,7 +42,7 @@ public class CommentApiController {
                                                             @RequestParam(defaultValue = "10") int size,
                                                             @PathVariable Long articleId) {
 
-        Page<FindResponse> comments = commentQueryService.findByArticleId(articleId, PageRequest.of(page, size))
+        Page<FindResponse> comments = commentQueryService.findByArticleId(articleId, page, size)
                 .map(FindResponse::from);
 
         return ResponseEntity.ok(comments);
