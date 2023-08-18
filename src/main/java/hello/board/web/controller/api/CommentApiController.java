@@ -10,7 +10,6 @@ import hello.board.web.annotation.Login;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -42,7 +41,7 @@ public class CommentApiController {
                                                             @RequestParam(defaultValue = "10") int size,
                                                             @PathVariable Long articleId) {
 
-        Page<FindResponse> comments = commentQueryService.findByArticleId(articleId, page, size)
+        Page<FindResponse> comments = commentQueryService.findByArticleId(articleId, toZeroStartIndex(page), size)
                 .map(FindResponse::from);
 
         return ResponseEntity.ok(comments);
@@ -72,15 +71,22 @@ public class CommentApiController {
     public ResponseEntity<Void> deleteComment(@Login User user, @PathVariable Long articleId, @PathVariable Long commentId) {
 
         validateUser(user);
+
         commentService.delete(commentId, articleId ,user.getId());
 
         return ResponseEntity.ok().build();
     }
 
+    /* ##################################################### */
+
     private static void handleBindingError(BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             throw BindingErrorException.of(bindingResult.getFieldErrors(), bindingResult.getGlobalErrors());
         }
+    }
+
+    private static int toZeroStartIndex(int page) {
+        return Integer.max(0, page - 1);
     }
 
     private static void validateUser(User user) {

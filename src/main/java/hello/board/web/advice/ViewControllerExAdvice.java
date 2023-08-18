@@ -1,6 +1,5 @@
 package hello.board.web.advice;
 
-import hello.board.exception.DuplicatedEmailException;
 import hello.board.exception.FailToFindEntityException;
 import hello.board.exception.NeedLoginException;
 import lombok.extern.slf4j.Slf4j;
@@ -26,13 +25,6 @@ public class ViewControllerExAdvice {
     public String needLoginExHandle(NeedLoginException e) {
         log.info("NeedLoginException", e);
         return "redirect:/login";
-    }
-
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(DuplicatedEmailException.class)
-    public String duplicatedEmailExHandle(DuplicatedEmailException e) {
-        log.info("DuplicatedEmailException", e);
-        return "redirect:/join";
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)

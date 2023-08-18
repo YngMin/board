@@ -1,6 +1,7 @@
 package hello.board.web.controller.view;
 
 import hello.board.dto.form.UserForm;
+import hello.board.dto.form.UserForm.Save;
 import hello.board.service.command.UserService;
 import hello.board.service.query.UserQueryService;
 import jakarta.validation.Valid;
@@ -28,29 +29,31 @@ public class UserViewController {
 
     @GetMapping("/join")
     public String joinForm(Model model) {
-        model.addAttribute("user", UserForm.Save.empty());
+        model.addAttribute("user", Save.empty());
         return "login/joinForm";
     }
 
     @PostMapping("/join")
-    public String join(@Valid @ModelAttribute("user") UserForm.Save user, BindingResult bindingResult) {
+    public String join(@Valid @ModelAttribute("userSaveForm") Save userSaveForm,
+                       BindingResult bindingResult)
+    {
 
         if (bindingResult.hasErrors()) {
             return "login/joinForm";
         }
 
-        if (user.passwordDoesNotMatch()) {
+        if (userSaveForm.passwordDoesNotMatch()) {
             bindingResult.reject("PasswordNotMatch");
             return "login/joinForm";
         }
 
-        if (userQueryService.existsByEmail(user.getEmail())) {
+        if (userQueryService.existsByEmail(userSaveForm.getEmail())) {
             bindingResult.reject("EmailExists");
             return "login/joinForm";
         }
 
         try {
-            userService.save(user.toDto());
+            userService.save(userSaveForm.toDto());
         } catch(DataIntegrityViolationException e) {
             bindingResult.reject("EmailExists");
             return "login/joinForm";

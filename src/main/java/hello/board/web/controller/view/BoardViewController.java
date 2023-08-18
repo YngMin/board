@@ -7,6 +7,7 @@ import hello.board.dto.service.search.ArticleSearchCond;
 import hello.board.dto.service.search.ArticleSearchType;
 import hello.board.dto.view.CommentViewResponse;
 import hello.board.dto.view.UserViewResponse;
+import hello.board.exception.WrongPageRequestException;
 import hello.board.service.command.ArticleService;
 import hello.board.service.query.ArticleQueryService;
 import hello.board.service.query.CommentQueryService;
@@ -42,10 +43,9 @@ public class BoardViewController {
     }
 
     @GetMapping("/board")
-    public String getArticles(@ModelAttribute ArticleSearchCond cond,
-                              @RequestParam(name = "page", defaultValue = "1") int page,
-                              @Login User user,
-                              Model model) {
+    public String getArticles(@ModelAttribute("cond") ArticleSearchCond cond,
+                              @RequestParam(defaultValue = "1") int page,
+                              @Login User user, Model model) {
 
         Page<ListView> articles = articleQueryService.search(cond, toZeroStartIndex(page), ARTICLE_PAGE_SIZE)
                 .map(ListView::from);
@@ -61,7 +61,9 @@ public class BoardViewController {
     }
 
     @GetMapping("/board/{id}")
-    public String getArticle(@RequestParam(defaultValue = "1") int page, @Login User user, @PathVariable Long id, Model model) {
+    public String getArticle(@RequestParam(defaultValue = "1") int page,
+                             @Login User user, @PathVariable Long id, Model model) {
+
         LookUp article = articleService.lookUp(id, toZeroStartIndex(page), COMMENT_PAGE_SIZE);
         Page<Comment> comments = article.getComments();
 
@@ -114,7 +116,7 @@ public class BoardViewController {
 
     private static int toZeroStartIndex(int page) {
         if (page <= 0) {
-            throw new IllegalArgumentException("Wrong Page Number");
+            throw new WrongPageRequestException("Wrong Page Number");
         }
 
         return page - 1;
@@ -123,12 +125,12 @@ public class BoardViewController {
     private static <T> void validatePageRequest(int page, Page<T> result) {
         if (result.getTotalPages() == 0) {
             if (page > 1) {
-                throw new IllegalArgumentException("Wrong Page Request");
+                throw new WrongPageRequestException("Wrong Page Request");
             }
         }
 
         else if (page > result.getTotalPages()) {
-            throw new IllegalArgumentException("Wrong Page Request");
+            throw new WrongPageRequestException("Wrong Page Request");
         }
     }
 
