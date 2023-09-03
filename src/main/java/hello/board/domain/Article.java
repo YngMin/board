@@ -10,11 +10,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@Table(indexes = @Index(name = "idx__article_id__desc", columnList = "article_id DESC", unique = true))
 @Getter
 @ToString(of = {"id", "title", "content", "view"})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Article extends BaseEntity {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "article_id", updatable = false)

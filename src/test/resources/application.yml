@@ -2,21 +2,19 @@ spring:
   profiles:
     active: test
 
+  datasource:
+    url: jdbc:h2:tcp://localhost/~/newboard
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
   jpa:
     hibernate:
       ddl-auto: create
     properties:
       hibernate:
         format_sql: true
-        use_sql_comments: false
-    open-in-view: false
-
-#  datasource:
-#    url: jdbc:h2:tcp://localhost/~/board
-#    username: sa
-#    password:
-#    driver-class-name: org.h2.Driver
 
 logging:
   level:
-    org.hibernate.SQL: debug
+    org.hibernate.sql: debug
