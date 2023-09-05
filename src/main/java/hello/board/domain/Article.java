@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(indexes = @Index(name = "idx__article_id__desc", columnList = "article_id DESC", unique = true))
 @Getter
 @ToString(of = {"id", "title", "content", "view"})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
