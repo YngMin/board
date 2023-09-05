@@ -15,6 +15,7 @@ import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static hello.board.domain.QArticle.article;
@@ -73,7 +74,9 @@ public class ArticleSearchRepositoryImpl implements ArticleSearchRepository {
     }
 
     private List<Long> getTheNumberOfComments(List<Article> articles) {
-        return query
+        return articles.isEmpty()
+                ? Collections.emptyList()
+                : query
                 .select(Wildcard.count)
                 .from(comment)
                 .where(comment.article.in(articles))
@@ -117,9 +120,15 @@ public class ArticleSearchRepositoryImpl implements ArticleSearchRepository {
 
     private static List<ArticleSearchDto> toArticleSearchDtos(List<Article> articles, List<Long> commentsCounts) {
         List<ArticleSearchDto> content = new ArrayList<>();
+
+        if (articles.size() != commentsCounts.size()) {
+            throw new IllegalStateException();
+        }
+
         for (int i = 0; i < articles.size(); i++) {
             content.add(new ArticleSearchDto(articles.get(i), commentsCounts.get(i)));
         }
+
         return content;
     }
 
