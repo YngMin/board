@@ -18,6 +18,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -31,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @Slf4j
 @DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class ArticleQueryServiceTest {
 
     @Autowired
@@ -226,6 +228,115 @@ class ArticleQueryServiceTest {
         assertThatThrownBy(() -> articleQueryService.findWithComments(WRONG_ID))
                 .as("존재하지 않는 게시글")
                 .isInstanceOf(FailToFindEntityException.class);
+    }
+
+    @Test
+    @DisplayName("댓글 없는 게시글 검색 성공")
+    void search_NoComment() {
+        //given
+        User user1 = createUserAndPersist("user1", "test1@gmail.com", "12341");
+        User user2 = createUserAndPersist("user2", "test2@gmail.com", "12342");
+
+        final int NUMBER_OF_ARTICLES = 123;
+
+        for (int i = 0; i < NUMBER_OF_ARTICLES; i++) {
+            Article article = Article.create("title " + i, "content " + i, (i % 2 == 1) ? user1 : user2);
+            em.persist(article);
+        }
+
+        final int PAGE_1 = 0, SIZE_1 = 10;
+        final int PAGE_2 = 2, SIZE_2 = 20;
+        final int PAGE_3 = 19, SIZE_3 = 5;
+
+        em.flush();
+        em.clear();
+
+        //when
+        Page<ArticleSearchDto> result1 = articleQueryService.search(PAGE_1, SIZE_1);
+        Page<ArticleSearchDto> result2 = articleQueryService.search(PAGE_2, SIZE_2);
+        Page<ArticleSearchDto> result3 = articleQueryService.search(PAGE_3, SIZE_3);
+
+        //then
+        assertThat(result1.getTotalElements())
+                .as("총 게시물 수")
+                .isEqualTo(NUMBER_OF_ARTICLES);
+
+        assertThat(result2.getTotalElements())
+                .as("총 게시물 수")
+                .isEqualTo(NUMBER_OF_ARTICLES);
+
+        assertThat(result3.getTotalElements())
+                .as("총 게시물 수")
+                .isEqualTo(NUMBER_OF_ARTICLES);
+
+        assertThat(result1.getContent())
+                .extracting("article")
+                .extracting("title")
+                .as("게시물 제목")
+                .containsExactly(getTitles(NUMBER_OF_ARTICLES, PAGE_1, SIZE_1));
+
+        assertThat(result2.getContent())
+                .extracting("article")
+                .extracting("title")
+                .as("게시물 제목")
+                .containsExactly(getTitles(NUMBER_OF_ARTICLES, PAGE_2, SIZE_2));
+
+        assertThat(result3.getContent())
+                .extracting("article")
+                .extracting("title")
+                .as("게시물 제목")
+                .containsExactly(getTitles(NUMBER_OF_ARTICLES, PAGE_3, SIZE_3));
+
+        assertThat(result1.getContent())
+                .extracting("article")
+                .extracting("content")
+                .as("게시물 내용")
+                .containsExactly(getContents(NUMBER_OF_ARTICLES, PAGE_1, SIZE_1));
+
+        assertThat(result2.getContent())
+                .extracting("article")
+                .extracting("content")
+                .as("게시물 내용")
+                .containsExactly(getContents(NUMBER_OF_ARTICLES, PAGE_2, SIZE_2));
+
+        assertThat(result3.getContent())
+                .extracting("article")
+                .extracting("content")
+                .as("게시물 내용")
+                .containsExactly(getContents(NUMBER_OF_ARTICLES, PAGE_3, SIZE_3));
+
+        assertThat(result1.getContent())
+                .extracting("article")
+                .extracting("author")
+                .as("작성자 페치 조인 성공")
+                .allMatch(isNotProxy());
+
+        assertThat(result2.getContent())
+                .extracting("article")
+                .extracting("author")
+                .as("작성자 페치 조인 성공")
+                .allMatch(isNotProxy());
+
+        assertThat(result3.getContent())
+                .extracting("article")
+                .extracting("author")
+                .as("작성자 페치 조인 성공")
+                .allMatch(isNotProxy());
+
+        assertThat(result1.getContent())
+                .extracting("numComments")
+                .as("댓글 수")
+                .containsOnly(0L);
+
+        assertThat(result2.getContent())
+                .extracting("numComments")
+                .as("댓글 수")
+                .containsOnly(0L);
+
+        assertThat(result3.getContent())
+                .extracting("numComments")
+                .as("댓글 수")
+                .containsOnly(0L);
     }
 
     @Test

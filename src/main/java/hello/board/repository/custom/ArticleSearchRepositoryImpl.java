@@ -5,6 +5,7 @@ import com.querydsl.core.types.dsl.Wildcard;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import hello.board.domain.Article;
+import hello.board.dto.service.search.ArticleCommentCountDto;
 import hello.board.dto.service.search.ArticleSearchCond;
 import hello.board.dto.service.search.ArticleSearchDto;
 import hello.board.dto.service.search.ArticleSearchType;
@@ -14,13 +15,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
+import static com.querydsl.core.types.Projections.constructor;
 import static hello.board.domain.QArticle.article;
 import static hello.board.domain.QComment.comment;
 import static hello.board.domain.QUser.user;
+import static java.util.stream.Collectors.toMap;
 
 public class ArticleSearchRepositoryImpl implements ArticleSearchRepository {
 
@@ -42,13 +44,13 @@ public class ArticleSearchRepositoryImpl implements ArticleSearchRepository {
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        List<Long> numOfComments = getTheNumberOfComments(articles);
+        List<ArticleSearchDto> content = addCommentCountInfo(articles);
 
-        List<ArticleSearchDto> content = toArticleSearchDtos(articles, numOfComments);
         JPAQuery<Long> countQuery = getSimpleCountQuery();
 
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
+
 
     @Override
     public Page<ArticleSearchDto> search(ArticleSearchCond cond, Pageable pageable) {
@@ -65,24 +67,38 @@ public class ArticleSearchRepositoryImpl implements ArticleSearchRepository {
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        List<Long> numOfComments = getTheNumberOfComments(articles);
+        List<ArticleSearchDto> content = addCommentCountInfo(articles);
 
-        List<ArticleSearchDto> content = toArticleSearchDtos(articles, numOfComments);
-        JPAQuery<Long> countQuery = getCountQuery(cond);
+        JPAQuery<Long> countQuery = getConditionCountQuery(cond);
 
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
 
-    private List<Long> getTheNumberOfComments(List<Article> articles) {
-        return articles.isEmpty()
-                ? Collections.emptyList()
-                : query
-                .select(Wildcard.count)
+    private List<ArticleSearchDto> addCommentCountInfo(List<Article> articles) {
+
+        List<ArticleCommentCountDto> articleCommentCounts = query
+                .select(constructor(ArticleCommentCountDto.class,
+                        comment.article,
+                        Wildcard.count
+                ))
                 .from(comment)
                 .where(comment.article.in(articles))
                 .groupBy(comment.article)
-                .orderBy(comment.article.id.desc())
                 .fetch();
+
+        return toArticleSearchDtos(articles, articleCommentCounts);
+    }
+
+    private static List<ArticleSearchDto> toArticleSearchDtos(List<Article> articles, List<ArticleCommentCountDto> articleCommentCount) {
+        final Map<Article, Long> articleCommentCountMap = articleCommentCount.stream()
+                .collect(toMap(
+                        ArticleCommentCountDto::getArticle,
+                        ArticleCommentCountDto::getNumberOfComments
+                ));
+
+        return articles.stream()
+                .map(atc -> new ArticleSearchDto(atc, articleCommentCountMap.getOrDefault(atc, 0L)))
+                .toList();
     }
 
     private JPAQuery<Long> getSimpleCountQuery() {
@@ -91,7 +107,7 @@ public class ArticleSearchRepositoryImpl implements ArticleSearchRepository {
                 .from(article);
     }
 
-    private JPAQuery<Long> getCountQuery(ArticleSearchCond cond) {
+    private JPAQuery<Long> getConditionCountQuery(ArticleSearchCond cond) {
         JPAQuery<Long> simpleCountQuery = getSimpleCountQuery();
 
         if (cond.getType() == ArticleSearchType.AUTHOR) {
@@ -116,20 +132,6 @@ public class ArticleSearchRepositoryImpl implements ArticleSearchRepository {
             case TITLE_AND_CONTENT -> article.title.contains(keyword).or(article.content.contains(keyword));
             case AUTHOR -> article.author.name.contains(keyword);
         };
-    }
-
-    private static List<ArticleSearchDto> toArticleSearchDtos(List<Article> articles, List<Long> commentsCounts) {
-        List<ArticleSearchDto> content = new ArrayList<>();
-
-        if (articles.size() != commentsCounts.size()) {
-            throw new IllegalStateException();
-        }
-
-        for (int i = 0; i < articles.size(); i++) {
-            content.add(new ArticleSearchDto(articles.get(i), commentsCounts.get(i)));
-        }
-
-        return content;
     }
 
     private static void validateCondition(ArticleSearchCond cond) {
