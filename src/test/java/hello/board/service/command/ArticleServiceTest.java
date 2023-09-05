@@ -49,17 +49,7 @@ class ArticleServiceTest {
 
         @Bean
         ArticleService articleService(ArticleRepository articleRepository, UserRepository userRepository) {
-            return new ArticleService(articleRepository, userQueryService(userRepository), articleQueryService(articleRepository));
-        }
-
-        @Bean
-        UserQueryService userQueryService(UserRepository userRepository) {
-            return new UserQueryService(userRepository);
-        }
-
-        @Bean
-        ArticleQueryService articleQueryService(ArticleRepository articleRepository) {
-            return new ArticleQueryService(articleRepository);
+            return new ArticleService(articleRepository, userRepository);
         }
 
     }

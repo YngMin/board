@@ -1,7 +1,7 @@
 package hello.board.service.command;
 
+import hello.board.exception.FailToFindEntityException;
 import hello.board.repository.UserRepository;
-import hello.board.service.query.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -16,9 +16,6 @@ import static hello.board.dto.service.UserServiceDto.Update;
 public class UserService {
 
     private final UserRepository userRepository;
-
-    private final UserQueryService userQueryService;
-
     private final PasswordEncoder passwordEncoder;
 
     public Long save(Save param) {
@@ -29,7 +26,8 @@ public class UserService {
 
     public void update(Long id, Update param) {
         if (param != null) {
-            userQueryService.findById(id)
+            userRepository.findById(id)
+                    .orElseThrow(() -> FailToFindEntityException.of("User"))
                     .updateName(param.getName())
                     .updatePassword(encodeRawPassword(param.getPassword()));
         }

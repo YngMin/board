@@ -46,22 +46,7 @@ class CommentServiceTest {
 
         @Bean
         CommentService commentService(CommentRepository commentRepository, UserRepository userRepository, ArticleRepository articleRepository) {
-            return new CommentService(commentRepository, userQueryService(userRepository), articleQueryService(articleRepository), commentQueryService(commentRepository));
-        }
-
-        @Bean
-        UserQueryService userQueryService(UserRepository userRepository) {
-            return new UserQueryService(userRepository);
-        }
-
-        @Bean
-        ArticleQueryService articleQueryService(ArticleRepository articleRepository) {
-            return new ArticleQueryService(articleRepository);
-        }
-
-        @Bean
-        CommentQueryService commentQueryService(CommentRepository commentRepository) {
-            return new CommentQueryService(commentRepository);
+            return new CommentService(commentRepository, articleRepository, userRepository);
         }
     }
 

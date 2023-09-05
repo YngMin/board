@@ -46,7 +46,7 @@ class UserServiceTest {
 
         @Bean
         UserService userService(UserRepository userRepository) {
-            return new UserService(userRepository, userQueryService(userRepository), passwordEncoder());
+            return new UserService(userRepository, passwordEncoder());
         }
 
         @Bean

@@ -8,8 +8,7 @@ import hello.board.exception.FailToFindEntityException;
 import hello.board.exception.NoAuthorityException;
 import hello.board.exception.WrongPageRequestException;
 import hello.board.repository.ArticleRepository;
-import hello.board.service.query.ArticleQueryService;
-import hello.board.service.query.UserQueryService;
+import hello.board.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,19 +25,20 @@ import static hello.board.dto.service.ArticleServiceDto.*;
 public class ArticleService {
 
     private final ArticleRepository articleRepository;
-
-    private final UserQueryService userQueryService;
-    private final ArticleQueryService articleQueryService;
+    private final UserRepository userRepository;
 
     public Long save(Long userId, Save param) {
-        User user = userQueryService.findById(userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> FailToFindEntityException.of("User"));
+
         Article article = param.toEntity(user);
 
         return articleRepository.save(article).getId();
     }
 
     public void update(Long articleId, Long userId, Update param) {
-        Article article = articleQueryService.findById(articleId);
+        Article article = articleRepository.findById(articleId)
+                        .orElseThrow(() -> FailToFindEntityException.of("Article"));
 
         validateAuthor(article, userId);
 
@@ -48,7 +48,8 @@ public class ArticleService {
     }
 
     public void delete(Long articleId, Long userId) {
-        Article article = articleQueryService.findById(articleId);
+        Article article = articleRepository.findById(articleId)
+                .orElseThrow(() -> FailToFindEntityException.of("Article"));
 
         validateAuthor(article, userId);
 
@@ -56,8 +57,10 @@ public class ArticleService {
     }
 
     public Article lookUp(Long id) {
-        return articleQueryService.findWithComments(id)
+        return articleRepository.findWithComments(id)
+                .orElseThrow(() -> FailToFindEntityException.of("Article"))
                 .increaseView();
+
     }
 
     public LookUp lookUp(Long id, int page, int size) {
@@ -66,7 +69,8 @@ public class ArticleService {
 
         Page<ArticleCommentFlatDto> result = articleRepository.findWithComments(id, PageRequest.of(page, size));
 
-        Article article = extractArticleFrom(result)
+        Article article =
+                extractArticleFrom(result)
                 .increaseView();
 
         Page<Comment> comments = extractCommentsFrom(result);
