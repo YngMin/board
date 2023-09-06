@@ -4,12 +4,15 @@ import hello.board.domain.Comment;
 import hello.board.domain.User;
 import hello.board.exception.BindingErrorException;
 import hello.board.exception.NeedLoginException;
+import hello.board.exception.WrongPageRequestException;
 import hello.board.service.command.CommentService;
 import hello.board.service.query.CommentQueryService;
 import hello.board.web.annotation.Login;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -41,7 +44,9 @@ public class CommentApiController {
                                                             @RequestParam(defaultValue = "10") int size,
                                                             @PathVariable Long articleId) {
 
-        Page<FindResponse> comments = commentQueryService.findByArticleId(articleId, toZeroStartIndex(page), size)
+        Pageable pageable = createPageable(page, size);
+
+        Page<FindResponse> comments = commentQueryService.findByArticleId(articleId, pageable)
                 .map(FindResponse::from);
 
         return ResponseEntity.ok(comments);
@@ -83,6 +88,13 @@ public class CommentApiController {
         if (bindingResult.hasErrors()) {
             throw BindingErrorException.of(bindingResult.getFieldErrors(), bindingResult.getGlobalErrors());
         }
+    }
+
+    private static Pageable createPageable(int page, int size) {
+        if (size < 1) {
+            throw WrongPageRequestException.of(page, size);
+        }
+        return PageRequest.of(toZeroStartIndex(page), size);
     }
 
     private static int toZeroStartIndex(int page) {

@@ -12,8 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Objects;
-
 import static hello.board.dto.service.CommentServiceDto.Save;
 import static hello.board.dto.service.CommentServiceDto.Update;
 
@@ -33,19 +31,25 @@ public class CommentService {
         User author = userRepository.findById(userId)
                 .orElseThrow(() -> FailToFindEntityException.of("User"));
 
-        return commentRepository.save(param.toEntity(article, author)).getId();
+        Comment comment = param.toEntity(article, author);
+
+        return commentRepository.save(comment).getId();
     }
 
     public void update(Long commentId, Long articleId, Long userId, Update param) {
-        Comment comment = findAndValidate(commentId, articleId, userId);
+        Comment comment = findCommentById(commentId);
 
-        if (param != null) {
-            comment.update(param.getContent());
-        }
+        validateArticle(comment, articleId);
+        validateAuthor(comment, userId);
+
+        updateComment(param, comment);
     }
 
     public void delete(Long commentId, Long articleId, Long userId) {
-        Comment comment = findAndValidate(commentId, articleId, userId);
+        Comment comment = findCommentById(commentId);
+
+        validateArticle(comment, articleId);
+        validateAuthor(comment, userId);
 
         comment.deleteFromArticle();
         commentRepository.delete(comment);
@@ -53,23 +57,25 @@ public class CommentService {
 
     /* ################################################### */
 
-    private Comment findAndValidate(Long commentId, Long articleId, Long userId) {
-        Comment comment = commentRepository.findWithArticleById(commentId)
+    private Comment findCommentById(Long commentId) {
+        return commentRepository.findWithArticleById(commentId)
                 .orElseThrow(() -> FailToFindEntityException.of("Comment"));
+    }
 
-        validateArticle(comment, articleId);
-        validateAuthor(comment, userId);
-        return comment;
+    private static void updateComment(Update param, Comment comment) {
+        if (param != null) {
+            comment.modifyContent(param.getContent());
+        }
     }
 
     private static void validateArticle(Comment comment, Long articleId) {
-        if (!Objects.equals(comment.getArticle().getId(), articleId)) {
+        if (!comment.isIdOfMyArticle(articleId)) {
             throw new IllegalArgumentException("This Article does not have this Comment");
         }
     }
 
     private static void validateAuthor(Comment comment, Long userId) {
-        if (!Objects.equals(comment.getAuthor().getId(), userId)) {
+        if (!comment.isIdOfAuthor(userId)) {
             throw new NoAuthorityException("You do not have authority!");
         }
     }

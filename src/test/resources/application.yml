@@ -1,6 +1,13 @@
 spring:
   profiles:
-    active: test
+    active: perform
+  config:
+    import: application_perform.yml
+---
+spring:
+  config:
+    activate:
+      on-profile: test
 
   jpa:
     hibernate:

@@ -19,6 +19,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.function.Predicate;
 
@@ -238,17 +239,21 @@ class CommentQueryServiceTest {
         final int PAGE_2 = 2, SIZE_2 = 13;
         final int PAGE_3 = 3, SIZE_3 = 5;
 
+        final PageRequest pageable1 = PageRequest.of(PAGE_1, SIZE_1);
+        final PageRequest pageable2 = PageRequest.of(PAGE_2, SIZE_2);
+        final PageRequest pageable3 = PageRequest.of(PAGE_3, SIZE_3);
+
         em.flush();
         em.clear();
 
         //when
-        Page<Comment> commentsOfArticle1_1 = commentQueryService.findByArticleId(article1Id, PAGE_1, SIZE_1);
-        Page<Comment> commentsOfArticle1_2 = commentQueryService.findByArticleId(article1Id, PAGE_2, SIZE_2);
-        Page<Comment> commentsOfArticle1_3 = commentQueryService.findByArticleId(article1Id, PAGE_3, SIZE_3);
+        Page<Comment> commentsOfArticle1_1 = commentQueryService.findByArticleId(article1Id, pageable1);
+        Page<Comment> commentsOfArticle1_2 = commentQueryService.findByArticleId(article1Id, pageable2);
+        Page<Comment> commentsOfArticle1_3 = commentQueryService.findByArticleId(article1Id, pageable3);
 
-        Page<Comment> commentsOfArticle2_1 = commentQueryService.findByArticleId(article2Id, PAGE_1, SIZE_1);
-        Page<Comment> commentsOfArticle2_2 = commentQueryService.findByArticleId(article2Id, PAGE_2, SIZE_2);
-        Page<Comment> commentsOfArticle2_3 = commentQueryService.findByArticleId(article2Id, PAGE_3, SIZE_3);
+        Page<Comment> commentsOfArticle2_1 = commentQueryService.findByArticleId(article2Id, pageable1);
+        Page<Comment> commentsOfArticle2_2 = commentQueryService.findByArticleId(article2Id, pageable2);
+        Page<Comment> commentsOfArticle2_3 = commentQueryService.findByArticleId(article2Id, pageable3);
 
         //then
         assertThat(commentsOfArticle1_1.getTotalElements())
@@ -358,15 +363,18 @@ class CommentQueryServiceTest {
         final int PAGE_1 = 0, SIZE_1 = 0;
         final int PAGE_2 = -1, SIZE_2 = 13;
 
+        final PageRequest pageable1 = PageRequest.of(PAGE_1, SIZE_1);
+        final PageRequest pageable2 = PageRequest.of(PAGE_2, SIZE_2);
+
         em.flush();
         em.clear();
 
         //when & then
-        assertThatThrownBy(() -> commentQueryService.findByArticleId(article1Id, PAGE_1, SIZE_1))
+        assertThatThrownBy(() -> commentQueryService.findByArticleId(article1Id, pageable1))
                 .as("페이지 크기가 1보다 작음")
                 .isInstanceOf(WrongPageRequestException.class);
 
-        assertThatThrownBy(() -> commentQueryService.findByArticleId(article1Id, PAGE_2, SIZE_2))
+        assertThatThrownBy(() -> commentQueryService.findByArticleId(article1Id, pageable2))
                 .as("페이지 번호가 0보다 작음")
                 .isInstanceOf(WrongPageRequestException.class);
     }

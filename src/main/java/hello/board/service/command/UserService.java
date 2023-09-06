@@ -1,5 +1,6 @@
 package hello.board.service.command;
 
+import hello.board.domain.User;
 import hello.board.exception.FailToFindEntityException;
 import hello.board.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,18 +20,21 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     public Long save(Save param) {
-        return userRepository.save(
-                param.toEntity(passwordEncoder))
-                .getId();
+        User user = param.toEntity(passwordEncoder);
+        return userRepository.save(user).getId();
     }
 
     public void update(Long id, Update param) {
         if (param != null) {
-            userRepository.findById(id)
-                    .orElseThrow(() -> FailToFindEntityException.of("User"))
-                    .updateName(param.getName())
-                    .updatePassword(encodeRawPassword(param.getPassword()));
+            User user = userRepository.findById(id)
+                    .orElseThrow(() -> FailToFindEntityException.of("User"));
+            updateUser(param, user);
         }
+    }
+
+    private void updateUser(Update param, User user) {
+        user.modifyName(param.getName());
+        user.modifyPassword(encodeRawPassword(param.getPassword()));
     }
 
     private String encodeRawPassword(String rawPassword) {

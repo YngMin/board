@@ -33,14 +33,13 @@ public class User extends BaseEntity {
         return new User(name, email, password);
     }
 
-    public User updateName(String name) {
+    public void modifyName(String name) {
         if (name != null) {
             this.name = name;
         }
-        return this;
     }
 
-    public void updatePassword(String password) {
+    public void modifyPassword(String password) {
         if (password != null) {
             this.password = password;
         }

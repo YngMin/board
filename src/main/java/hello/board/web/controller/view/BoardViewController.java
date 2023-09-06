@@ -15,6 +15,8 @@ import hello.board.util.PageNumberGenerator;
 import hello.board.web.annotation.Login;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -47,10 +49,12 @@ public class BoardViewController {
                               @RequestParam(defaultValue = "1") int page,
                               @Login User user, Model model) {
 
-        Page<ListView> articles = articleQueryService.search(cond, toZeroStartIndex(page), ARTICLE_PAGE_SIZE)
+        Pageable pageable = createPageable(page, ARTICLE_PAGE_SIZE);
+
+        Page<ListView> articles = articleQueryService.search(cond, pageable)
                 .map(ListView::from);
 
-        validatePageRequest(page, articles);
+        filterOutMaliciousPageRequest(page, ARTICLE_PAGE_SIZE, articles);
 
         model.addAttribute("user", UserViewResponse.from(user));
         model.addAttribute("cond", cond);
@@ -64,10 +68,12 @@ public class BoardViewController {
     public String getArticle(@RequestParam(defaultValue = "1") int page,
                              @Login User user, @PathVariable Long id, Model model) {
 
-        LookUp article = articleService.lookUp(id, toZeroStartIndex(page), COMMENT_PAGE_SIZE);
+        Pageable pageable = createPageable(page, COMMENT_PAGE_SIZE);
+
+        LookUp article = articleService.lookUp(id, pageable);
         Page<Comment> comments = article.getComments();
 
-        validatePageRequest(page, comments);
+        filterOutMaliciousPageRequest(page, COMMENT_PAGE_SIZE, comments);
 
         model.addAttribute("user", UserViewResponse.from(user));
         model.addAttribute("article", View.from(article));
@@ -114,23 +120,30 @@ public class BoardViewController {
         model.addAttribute("article", Write.empty());
     }
 
-    private static int toZeroStartIndex(int page) {
+    private static Pageable createPageable(int page, int size) {
+        if (size < 1) {
+            throw WrongPageRequestException.of(page, size);
+        }
+        return PageRequest.of(toZeroStartIndex(page, size), size);
+    }
+
+    private static int toZeroStartIndex(int page, int size) {
         if (page <= 0) {
-            throw new WrongPageRequestException("Wrong Page Number");
+            throw WrongPageRequestException.of(page, size);
         }
 
         return page - 1;
     }
 
-    private static <T> void validatePageRequest(int page, Page<T> result) {
+    private static <T> void filterOutMaliciousPageRequest(int page, int size, Page<T> result) {
         if (result.getTotalPages() == 0) {
             if (page > 1) {
-                throw new WrongPageRequestException("Wrong Page Request");
+                throw WrongPageRequestException.of(page, size);
             }
         }
 
         else if (page > result.getTotalPages()) {
-            throw new WrongPageRequestException("Wrong Page Request");
+            throw WrongPageRequestException.of(page, size);
         }
     }
 

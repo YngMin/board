@@ -6,16 +6,13 @@ import hello.board.domain.User;
 import hello.board.dto.service.ArticleCommentFlatDto;
 import hello.board.exception.FailToFindEntityException;
 import hello.board.exception.NoAuthorityException;
-import hello.board.exception.WrongPageRequestException;
 import hello.board.repository.ArticleRepository;
 import hello.board.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Objects;
 
 import static hello.board.dto.service.ArticleServiceDto.*;
 
@@ -37,19 +34,15 @@ public class ArticleService {
     }
 
     public void update(Long articleId, Long userId, Update param) {
-        Article article = articleRepository.findById(articleId)
-                        .orElseThrow(() -> FailToFindEntityException.of("Article"));
+        Article article = findArticleById(articleId);
 
         validateAuthor(article, userId);
 
-        if (param != null) {
-            article.update(param.getTitle(), param.getContent());
-        }
+        updateArticle(article, param);
     }
 
     public void delete(Long articleId, Long userId) {
-        Article article = articleRepository.findById(articleId)
-                .orElseThrow(() -> FailToFindEntityException.of("Article"));
+        Article article = findArticleById(articleId);
 
         validateAuthor(article, userId);
 
@@ -63,14 +56,10 @@ public class ArticleService {
 
     }
 
-    public LookUp lookUp(Long id, int page, int size) {
+    public LookUp lookUp(Long id, Pageable pageable) {
+        Page<ArticleCommentFlatDto> result = articleRepository.findWithComments(id, pageable);
 
-        validatePageRequest(page, size);
-
-        Page<ArticleCommentFlatDto> result = articleRepository.findWithComments(id, PageRequest.of(page, size));
-
-        Article article =
-                extractArticleFrom(result)
+        Article article = extractArticleFrom(result)
                 .increaseView();
 
         Page<Comment> comments = extractCommentsFrom(result);
@@ -80,15 +69,21 @@ public class ArticleService {
 
     /* ################################################## */
 
-    private static void validateAuthor(Article article, Long userId) throws NoAuthorityException {
-        if (!Objects.equals(article.getAuthor().getId(), userId)) {
-            throw new NoAuthorityException("You do not have authority!");
+    private Article findArticleById(Long articleId) {
+        return articleRepository.findById(articleId)
+                .orElseThrow(() -> FailToFindEntityException.of("Article"));
+    }
+
+    private static void updateArticle(Article article, Update param) {
+        if (param != null) {
+            article.modifyTitle(param.getTitle());
+            article.modifyContent(param.getContent());
         }
     }
 
-    private static void validatePageRequest(int page, int size) {
-        if (page < 0 || size < 1) {
-            throw WrongPageRequestException.of(page, size);
+    private static void validateAuthor(Article article, Long userId) throws NoAuthorityException {
+        if (!article.isIdOfAuthor(userId)) {
+            throw new NoAuthorityException("You do not have authority!");
         }
     }
 

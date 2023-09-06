@@ -5,12 +5,15 @@ import hello.board.domain.User;
 import hello.board.dto.service.search.ArticleSearchCond;
 import hello.board.exception.BindingErrorException;
 import hello.board.exception.NeedLoginException;
+import hello.board.exception.WrongPageRequestException;
 import hello.board.service.command.ArticleService;
 import hello.board.service.query.ArticleQueryService;
 import hello.board.web.annotation.Login;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -44,7 +47,9 @@ public class ArticleApiController {
                                                               @ModelAttribute("cond") ArticleSearchCond cond
                                                               ) {
 
-        Page<FindListResponse> articles = articleQueryService.search(cond, toZeroStartIndex(page), size)
+        Pageable pageable = createPageable(page, size);
+
+        Page<FindListResponse> articles = articleQueryService.search(cond, pageable)
                 .map(FindListResponse::from);
 
         return ResponseEntity.ok(articles);
@@ -66,6 +71,7 @@ public class ArticleApiController {
         handleBindingError(bindingResult);
 
         articleService.update(id, user.getId(), request.toDto());
+
         Article updatedArticle = articleQueryService.findById(id);
 
         return ResponseEntity.ok(UpdateResponse.from(updatedArticle));
@@ -77,6 +83,7 @@ public class ArticleApiController {
         validateUser(user);
 
         articleService.delete(id, user.getId());
+
         return ResponseEntity.ok().build();
     }
 
@@ -86,6 +93,13 @@ public class ArticleApiController {
         if (bindingResult.hasErrors()) {
             throw BindingErrorException.of(bindingResult.getFieldErrors(), bindingResult.getGlobalErrors());
         }
+    }
+
+    private static Pageable createPageable(int page, int size) {
+        if (size < 1) {
+            throw WrongPageRequestException.of(page, size);
+        }
+        return PageRequest.of(toZeroStartIndex(page), size);
     }
 
     private static int toZeroStartIndex(int page) {

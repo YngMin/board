@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.util.Objects;
+
 @Entity
 @Getter
 @ToString(of = {"id", "content"})
@@ -40,7 +42,7 @@ public class Comment extends BaseEntity {
         return new Comment(content, article, author);
     }
 
-    public void update(String content) {
+    public void modifyContent(String content) {
         if (content != null) {
             this.content = content;
         }
@@ -48,5 +50,13 @@ public class Comment extends BaseEntity {
 
     public void deleteFromArticle() {
         article.deleteComment(this);
+    }
+
+    public boolean isIdOfMyArticle(Long articleId) {
+        return Objects.equals(article.getId(), articleId);
+    }
+
+    public boolean isIdOfAuthor(Long userId) {
+        return Objects.equals(author.getId(), userId);
     }
 }

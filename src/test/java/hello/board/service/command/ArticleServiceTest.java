@@ -10,8 +10,6 @@ import hello.board.exception.NoAuthorityException;
 import hello.board.exception.WrongPageRequestException;
 import hello.board.repository.ArticleRepository;
 import hello.board.repository.UserRepository;
-import hello.board.service.query.ArticleQueryService;
-import hello.board.service.query.UserQueryService;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +22,8 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -236,6 +236,10 @@ class ArticleServiceTest {
         final int PAGE_2 = 2, SIZE_2 = 20;
         final int PAGE_3 = 19, SIZE_3 = 5;
 
+        final Pageable pageable1 = PageRequest.of(PAGE_1, SIZE_1);
+        final Pageable pageable2 = PageRequest.of(PAGE_2, SIZE_2);
+        final Pageable pageable3 = PageRequest.of(PAGE_3, SIZE_3);
+
         for (int i = PAGE_1; i < NUMBER_OF_COMMENTS; i++) {
             Comment comment = Comment.create("comment " + i, article, (i % 2 == 1) ? user1 : user2);
             em.persist(comment);
@@ -245,9 +249,9 @@ class ArticleServiceTest {
         em.clear();
 
         //when
-        LookUp lookUp1 = articleService.lookUp(id, PAGE_1, SIZE_1);
-        LookUp lookUp2 = articleService.lookUp(id, PAGE_2, SIZE_2);
-        LookUp lookUp3 = articleService.lookUp(id, PAGE_3, SIZE_3);
+        LookUp lookUp1 = articleService.lookUp(id, pageable1);
+        LookUp lookUp2 = articleService.lookUp(id, pageable2);
+        LookUp lookUp3 = articleService.lookUp(id, pageable3);
 
         // then
         //article
@@ -345,6 +349,10 @@ class ArticleServiceTest {
         final int PAGE_2 = 2, SIZE_2 = 0;
         final int PAGE_3 = -1, SIZE_3 = 5;
 
+        final Pageable pageable1 = PageRequest.of(PAGE_1, SIZE_1);
+        final Pageable pageable2 = PageRequest.of(PAGE_2, SIZE_2);
+        final Pageable pageable3 = PageRequest.of(PAGE_3, SIZE_3);
+
 
         for (int i = PAGE_1; i < NUMBER_OF_COMMENTS; i++) {
             Comment comment = Comment.create("comment " + i, article, (i % 2 == 1) ? user1 : user2);
@@ -355,15 +363,15 @@ class ArticleServiceTest {
         em.clear();
 
         //when & then
-        assertThatThrownBy(() -> articleService.lookUp(id, PAGE_1, SIZE_1))
+        assertThatThrownBy(() -> articleService.lookUp(id, pageable1))
                 .as("존재하지 않는 페이지")
                 .isInstanceOf(FailToFindEntityException.class);
 
-        assertThatThrownBy(() -> articleService.lookUp(id, PAGE_2, SIZE_2))
+        assertThatThrownBy(() -> articleService.lookUp(id, pageable2))
                 .as("페이지 크기가 1보다 작음")
                 .isInstanceOf(WrongPageRequestException.class);
 
-        assertThatThrownBy(() -> articleService.lookUp(id, PAGE_3, SIZE_3))
+        assertThatThrownBy(() -> articleService.lookUp(id, pageable3))
                 .as("페이지 번호가 0보다 작음")
                 .isInstanceOf(WrongPageRequestException.class);
 

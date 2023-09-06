@@ -8,6 +8,7 @@ import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Getter
@@ -45,10 +46,13 @@ public class Article extends BaseEntity {
         return new Article(title, content, author);
     }
 
-    public void update(String title, String content) {
+    public void modifyTitle(String title) {
         if (title != null) {
             this.title = title;
         }
+    }
+
+    public void modifyContent(String content) {
         if (content != null) {
             this.content = content;
         }
@@ -65,5 +69,9 @@ public class Article extends BaseEntity {
     public Article increaseView() {
         view++;
         return this;
+    }
+
+    public boolean isIdOfAuthor(Long userId) {
+        return Objects.equals(author.getId(), userId);
     }
 }
