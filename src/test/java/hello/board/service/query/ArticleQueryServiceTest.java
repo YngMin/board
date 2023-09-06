@@ -7,7 +7,6 @@ import hello.board.dto.service.search.ArticleSearchCond;
 import hello.board.dto.service.search.ArticleSearchDto;
 import hello.board.dto.service.search.ArticleSearchType;
 import hello.board.exception.FailToFindEntityException;
-import hello.board.exception.WrongPageRequestException;
 import hello.board.repository.ArticleRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceUnitUtil;
@@ -22,6 +21,8 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.function.Predicate;
@@ -246,13 +247,17 @@ class ArticleQueryServiceTest {
         final int PAGE_2 = 2, SIZE_2 = 20;
         final int PAGE_3 = 19, SIZE_3 = 5;
 
+        final Pageable pageable1 = PageRequest.of(PAGE_1, SIZE_1);
+        final Pageable pageable2 = PageRequest.of(PAGE_2, SIZE_2);
+        final Pageable pageable3 = PageRequest.of(PAGE_3, SIZE_3);
+
         em.flush();
         em.clear();
 
         //when
-        Page<ArticleSearchDto> result1 = articleQueryService.search(PAGE_1, SIZE_1);
-        Page<ArticleSearchDto> result2 = articleQueryService.search(PAGE_2, SIZE_2);
-        Page<ArticleSearchDto> result3 = articleQueryService.search(PAGE_3, SIZE_3);
+        Page<ArticleSearchDto> result1 = articleQueryService.search(pageable1);
+        Page<ArticleSearchDto> result2 = articleQueryService.search(pageable2);
+        Page<ArticleSearchDto> result3 = articleQueryService.search(pageable3);
 
         //then
         assertThat(result1.getTotalElements())
@@ -360,13 +365,17 @@ class ArticleQueryServiceTest {
         final int PAGE_2 = 2, SIZE_2 = 20;
         final int PAGE_3 = 19, SIZE_3 = 5;
 
+        final Pageable pageable1 = PageRequest.of(PAGE_1, SIZE_1);
+        final Pageable pageable2 = PageRequest.of(PAGE_2, SIZE_2);
+        final Pageable pageable3 = PageRequest.of(PAGE_3, SIZE_3);
+
         em.flush();
         em.clear();
 
         //when
-        Page<ArticleSearchDto> result1 = articleQueryService.search(PAGE_1, SIZE_1);
-        Page<ArticleSearchDto> result2 = articleQueryService.search(PAGE_2, SIZE_2);
-        Page<ArticleSearchDto> result3 = articleQueryService.search(PAGE_3, SIZE_3);
+        Page<ArticleSearchDto> result1 = articleQueryService.search(pageable1);
+        Page<ArticleSearchDto> result2 = articleQueryService.search(pageable2);
+        Page<ArticleSearchDto> result3 = articleQueryService.search(pageable3);
 
         //then
         assertThat(result1.getTotalElements())
@@ -485,41 +494,6 @@ class ArticleQueryServiceTest {
     }
 
     @Test
-    @DisplayName("검색 조건 없이 검색 실패")
-    void search_fail() {
-        //given
-        User user1 = createUserAndPersist("user1", "test1@gmail.com", "12341");
-        User user2 = createUserAndPersist("user2", "test2@gmail.com", "12342");
-
-        final int NUMBER_OF_ARTICLES = 123;
-
-        for (int i = 0; i < NUMBER_OF_ARTICLES; i++) {
-            Article article = Article.create("title " + i, "content " + i, (i % 2 == 1) ? user1 : user2);
-            em.persist(article);
-
-            for (int j = 0; j < i; j++) {
-                Comment comment = Comment.create("comment " + i, article, (j % 2 == 1) ? user1 : user2);
-                em.persist(comment);
-            }
-        }
-
-        final int PAGE_1 = 2, SIZE_1 = 0;
-        final int PAGE_2 = -1, SIZE_2 = 5;
-
-        em.flush();
-        em.clear();
-
-        //when
-        assertThatThrownBy(() -> articleQueryService.search(PAGE_1, SIZE_1))
-                .as("페이지 크기가 1보다 작음")
-                .isInstanceOf(WrongPageRequestException.class);
-
-        assertThatThrownBy(() -> articleQueryService.search(PAGE_2, SIZE_2))
-                .as("페이지 번호가 0보다 작음")
-                .isInstanceOf(WrongPageRequestException.class);
-    }
-
-    @Test
     @DisplayName("검색 조건 존재하는 검색 성공")
     void searchWithCondition() {
         //given
@@ -541,6 +515,9 @@ class ArticleQueryServiceTest {
         final int PAGE_1 = 0, SIZE_1 = 10;
         final int PAGE_2 = 1, SIZE_2 = 7;
 
+        final Pageable pageable1 = PageRequest.of(PAGE_1, SIZE_1);
+        final Pageable pageable2 = PageRequest.of(PAGE_2, SIZE_2);
+
         final ArticleSearchCond titleAndContent = ArticleSearchCond.create("3", ArticleSearchType.TITLE_AND_CONTENT);
         final ArticleSearchCond title = ArticleSearchCond.create("e 7", ArticleSearchType.TITLE);
         final ArticleSearchCond content = ArticleSearchCond.create("5", ArticleSearchType.CONTENT);
@@ -550,17 +527,17 @@ class ArticleQueryServiceTest {
         em.clear();
 
         //when
-        Page<ArticleSearchDto> titleAndContentResult1 = articleQueryService.search(titleAndContent, PAGE_1, SIZE_1);
-        Page<ArticleSearchDto> titleAndContentResult2 = articleQueryService.search(titleAndContent, PAGE_2, SIZE_2);
+        Page<ArticleSearchDto> titleAndContentResult1 = articleQueryService.search(titleAndContent, pageable1);
+        Page<ArticleSearchDto> titleAndContentResult2 = articleQueryService.search(titleAndContent, pageable2);
 
-        Page<ArticleSearchDto> titleResult1 = articleQueryService.search(title, PAGE_1, SIZE_1);
-        Page<ArticleSearchDto> titleResult2 = articleQueryService.search(title, PAGE_2, SIZE_2);
+        Page<ArticleSearchDto> titleResult1 = articleQueryService.search(title, pageable1);
+        Page<ArticleSearchDto> titleResult2 = articleQueryService.search(title, pageable2);
 
-        Page<ArticleSearchDto> contentResult1 = articleQueryService.search(content, PAGE_1, SIZE_1);
-        Page<ArticleSearchDto> contentResult2 = articleQueryService.search(content, PAGE_2, SIZE_2);
+        Page<ArticleSearchDto> contentResult1 = articleQueryService.search(content, pageable1);
+        Page<ArticleSearchDto> contentResult2 = articleQueryService.search(content, pageable2);
 
-        Page<ArticleSearchDto> authorResult1 = articleQueryService.search(author, PAGE_1, SIZE_1);
-        Page<ArticleSearchDto> authorResult2 = articleQueryService.search(author, PAGE_2, SIZE_2);
+        Page<ArticleSearchDto> authorResult1 = articleQueryService.search(author, pageable1);
+        Page<ArticleSearchDto> authorResult2 = articleQueryService.search(author, pageable2);
 
         //then
         // totalElements
@@ -760,20 +737,24 @@ class ArticleQueryServiceTest {
         final int PAGE_2 = 2, SIZE_2 = 20;
         final int PAGE_3 = 19, SIZE_3 = 5;
 
+        final Pageable pageable1 = PageRequest.of(PAGE_1, SIZE_1);
+        final Pageable pageable2 = PageRequest.of(PAGE_2, SIZE_2);
+        final Pageable pageable3 = PageRequest.of(PAGE_3, SIZE_3);
+
         final ArticleSearchCond emptyKeyword = ArticleSearchCond.create(" ", ArticleSearchType.TITLE_AND_CONTENT);
 
         em.flush();
         em.clear();
 
         //when
-        Page<ArticleSearchDto> emptyKeywordResult1 = articleQueryService.search(emptyKeyword, PAGE_1, SIZE_1);
-        Page<ArticleSearchDto> nullConditionResult1 = articleQueryService.search(null, PAGE_1, SIZE_1);
+        Page<ArticleSearchDto> emptyKeywordResult1 = articleQueryService.search(emptyKeyword, pageable1);
+        Page<ArticleSearchDto> nullConditionResult1 = articleQueryService.search(null, pageable1);
 
-        Page<ArticleSearchDto> emptyKeywordResult2 = articleQueryService.search(emptyKeyword, PAGE_2, SIZE_2);
-        Page<ArticleSearchDto> nullConditionResult2 = articleQueryService.search(null, PAGE_2, SIZE_2);
+        Page<ArticleSearchDto> emptyKeywordResult2 = articleQueryService.search(emptyKeyword, pageable2);
+        Page<ArticleSearchDto> nullConditionResult2 = articleQueryService.search(null, pageable2);
 
-        Page<ArticleSearchDto> emptyKeywordResult3 = articleQueryService.search(emptyKeyword, PAGE_3, SIZE_3);
-        Page<ArticleSearchDto> nullConditionResult3 = articleQueryService.search(null, PAGE_3, SIZE_3);
+        Page<ArticleSearchDto> emptyKeywordResult3 = articleQueryService.search(emptyKeyword, pageable3);
+        Page<ArticleSearchDto> nullConditionResult3 = articleQueryService.search(null, pageable3);
 
         //then
         //total elements
@@ -908,40 +889,4 @@ class ArticleQueryServiceTest {
 
     }
 
-    @Test
-    @DisplayName("검색 조건 존재하는 검색 실패")
-    void searchWithCondition_fail() {
-        //given
-        User user1 = createUserAndPersist("user1", "test1@gmail.com", "12341");
-        User user2 = createUserAndPersist("user2", "test2@gmail.com", "12342");
-
-        final int NUMBER_OF_ARTICLES = 123;
-
-        for (int i = 0; i < NUMBER_OF_ARTICLES; i++) {
-            Article article = Article.create("title " + i, "content " + i, (i % 2 == 1) ? user1 : user2);
-            em.persist(article);
-
-            for (int j = 0; j < i; j++) {
-                Comment comment = Comment.create("comment " + i, article, (j % 2 == 1) ? user1 : user2);
-                em.persist(comment);
-            }
-        }
-
-        final int PAGE_1 = 2, SIZE_1 = 0;
-        final int PAGE_2 = -1, SIZE_2 = 5;
-
-        final ArticleSearchCond cond = ArticleSearchCond.create("ser2", ArticleSearchType.AUTHOR);
-
-        em.flush();
-        em.clear();
-
-        //when
-        assertThatThrownBy(() -> articleQueryService.search(cond, PAGE_1, SIZE_1))
-                .as("페이지 크기가 1보다 작음")
-                .isInstanceOf(WrongPageRequestException.class);
-
-        assertThatThrownBy(() -> articleQueryService.search(cond, PAGE_2, SIZE_2))
-                .as("페이지 번호가 0보다 작음")
-                .isInstanceOf(WrongPageRequestException.class);
-    }
 }

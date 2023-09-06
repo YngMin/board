@@ -1,6 +1,6 @@
 spring:
   profiles:
-    active: perform
+    active: test
   config:
     import: application_perform.yml
 ---

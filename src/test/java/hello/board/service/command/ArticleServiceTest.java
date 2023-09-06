@@ -7,7 +7,6 @@ import hello.board.dto.service.ArticleServiceDto.LookUp;
 import hello.board.dto.service.ArticleServiceDto.Save;
 import hello.board.exception.FailToFindEntityException;
 import hello.board.exception.NoAuthorityException;
-import hello.board.exception.WrongPageRequestException;
 import hello.board.repository.ArticleRepository;
 import hello.board.repository.UserRepository;
 import jakarta.persistence.EntityManager;
@@ -346,12 +345,8 @@ class ArticleServiceTest {
         final int NUMBER_OF_COMMENTS = 123;
 
         final int PAGE_1 = 100, SIZE_1 = 10;
-        final int PAGE_2 = 2, SIZE_2 = 0;
-        final int PAGE_3 = -1, SIZE_3 = 5;
 
         final Pageable pageable1 = PageRequest.of(PAGE_1, SIZE_1);
-        final Pageable pageable2 = PageRequest.of(PAGE_2, SIZE_2);
-        final Pageable pageable3 = PageRequest.of(PAGE_3, SIZE_3);
 
 
         for (int i = PAGE_1; i < NUMBER_OF_COMMENTS; i++) {
@@ -366,15 +361,6 @@ class ArticleServiceTest {
         assertThatThrownBy(() -> articleService.lookUp(id, pageable1))
                 .as("존재하지 않는 페이지")
                 .isInstanceOf(FailToFindEntityException.class);
-
-        assertThatThrownBy(() -> articleService.lookUp(id, pageable2))
-                .as("페이지 크기가 1보다 작음")
-                .isInstanceOf(WrongPageRequestException.class);
-
-        assertThatThrownBy(() -> articleService.lookUp(id, pageable3))
-                .as("페이지 번호가 0보다 작음")
-                .isInstanceOf(WrongPageRequestException.class);
-
     }
 
     private static String[] getCommentContents(int page, int size) {

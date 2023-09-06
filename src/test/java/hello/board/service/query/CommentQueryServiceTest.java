@@ -340,43 +340,4 @@ class CommentQueryServiceTest {
                 .as("작성자 페치 조인 성공")
                 .allMatch(isNotProxy());
     }
-
-    @Test
-    @DisplayName("게시글 ID로 조회 실패")
-    void findByArticleId_fail() {
-        //given
-        User user1 = createUserAndPersist("user1", "test1@gmail.com", "12341");
-        User user2 = createUserAndPersist("user2", "test2@gmail.com", "12342");
-
-        Article article1 = createArticleAndPersist("title1", "content1", user1);
-        Article article2 = createArticleAndPersist("title2", "content2", user2);
-
-        Long article1Id = article1.getId();
-
-        final int NUMBER_OF_COMMENTS = 100;
-
-        for (int i = 0; i < NUMBER_OF_COMMENTS; i++) {
-            Comment comment = Comment.create("comment " + i, (i % 3 == 2) ? article1 : article2 , (i % 2 == 1) ? user1 : user2);
-            em.persist(comment);
-        }
-
-        final int PAGE_1 = 0, SIZE_1 = 0;
-        final int PAGE_2 = -1, SIZE_2 = 13;
-
-        final PageRequest pageable1 = PageRequest.of(PAGE_1, SIZE_1);
-        final PageRequest pageable2 = PageRequest.of(PAGE_2, SIZE_2);
-
-        em.flush();
-        em.clear();
-
-        //when & then
-        assertThatThrownBy(() -> commentQueryService.findByArticleId(article1Id, pageable1))
-                .as("페이지 크기가 1보다 작음")
-                .isInstanceOf(WrongPageRequestException.class);
-
-        assertThatThrownBy(() -> commentQueryService.findByArticleId(article1Id, pageable2))
-                .as("페이지 번호가 0보다 작음")
-                .isInstanceOf(WrongPageRequestException.class);
-    }
-
 }
