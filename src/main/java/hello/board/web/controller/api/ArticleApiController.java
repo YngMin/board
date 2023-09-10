@@ -11,6 +11,7 @@ import hello.board.service.query.ArticleQueryService;
 import hello.board.web.annotation.Login;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 
 import static hello.board.dto.api.ArticleApiDto.*;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class ArticleApiController {

@@ -1,25 +1,25 @@
 package hello.board.web.argumentresolver;
 
 import hello.board.domain.User;
-import hello.board.repository.UserRepository;
+import hello.board.service.query.UserQueryService;
 import hello.board.web.annotation.Login;
+import hello.board.web.domain.UserDetailsImpl;
 import jakarta.annotation.Nonnull;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.MethodParameter;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
-import java.security.Principal;
-
+@Slf4j
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class LoginArgumentResolver implements HandlerMethodArgumentResolver {
-
-    private final UserRepository userRepository;
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
@@ -32,18 +32,17 @@ public class LoginArgumentResolver implements HandlerMethodArgumentResolver {
     @Override
     public User resolveArgument(@Nonnull MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
 
-        HttpServletRequest request = (HttpServletRequest) webRequest.getNativeRequest();
+        Authentication authentication = SecurityContextHolder.getContext()
+                .getAuthentication();
 
-        Principal principal = request.getUserPrincipal();
-
-        if (principal == null) {
+        if (authentication == null) {
             return null;
         }
 
-        String email = principal.getName();
+        Object principal = authentication.getPrincipal();
 
-        return userRepository.findByEmail(email)
-                .orElse(null);
+        return (principal instanceof UserDetailsImpl userDetails)
+                ? userDetails.getUser()
+                : null;
     }
-
 }

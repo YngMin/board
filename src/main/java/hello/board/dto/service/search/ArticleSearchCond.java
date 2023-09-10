@@ -1,13 +1,11 @@
 package hello.board.dto.service.search;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
 @Getter
 @Setter
 @ToString
+@EqualsAndHashCode(exclude = {"keyword", "type"})
 @NoArgsConstructor
 public final class ArticleSearchCond {
 

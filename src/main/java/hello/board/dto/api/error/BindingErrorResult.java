@@ -4,6 +4,7 @@ import hello.board.exception.BindingErrorException;
 import lombok.Getter;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.util.Collection;
 import java.util.List;
@@ -27,6 +28,10 @@ public final class BindingErrorResult extends ErrorResult {
     }
 
     public static BindingErrorResult of(BindingErrorException e) {
+        return new BindingErrorResult("BAD", "입력 값 오류", e.getFieldErrors(), e.getGlobalErrors());
+    }
+
+    public static BindingErrorResult of(MethodArgumentNotValidException e) {
         return new BindingErrorResult("BAD", "입력 값 오류", e.getFieldErrors(), e.getGlobalErrors());
     }
 
