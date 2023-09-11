@@ -2,6 +2,7 @@ package hello.board.service.query;
 
 import hello.board.domain.Comment;
 import hello.board.exception.FailToFindEntityException;
+import hello.board.repository.ArticleRepository;
 import hello.board.repository.CommentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CommentQueryService {
 
+    private final ArticleRepository articleRepository;
     private final CommentRepository commentRepository;
 
     public Comment findById(Long id) {
@@ -31,14 +33,25 @@ public class CommentQueryService {
     }
 
     public Page<Comment> findByArticleId(Long articleId, Pageable pageable) {
+        if (isWrongArticleId(articleId)) {
+            throw new IllegalArgumentException("wrong article id: " + articleId);
+        }
         return commentRepository.findByArticleId(articleId, pageable);
     }
 
+
+
     /* ################################################## */
+
+    private boolean isWrongArticleId(Long articleId) {
+        return !articleRepository.existsById(articleId);
+    }
 
     private static void validateArticle(Comment comment, Long articleId) {
         if (!comment.isIdOfMyArticle(articleId)) {
-            throw new IllegalArgumentException("This Article does not exist or does not have this Comment");
+            throw new IllegalArgumentException("wrong article id: " + articleId);
         }
     }
+
+
 }

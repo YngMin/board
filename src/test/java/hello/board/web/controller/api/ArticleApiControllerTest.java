@@ -345,7 +345,7 @@ class ArticleApiControllerTest {
         ResultActions result = mockMvc.perform(
                 get("/api/articles")
                         .contentType(APPLICATION_JSON)
-                        .param("page", "2")
+                        .param("page", "3")
                         .param("size", "20")
         );
 

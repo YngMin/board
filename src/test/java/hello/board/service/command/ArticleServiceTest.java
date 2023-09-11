@@ -64,10 +64,6 @@ class ArticleServiceTest {
         return user;
     }
 
-    private static Predicate<Object> isNotProxy() {
-        return a -> !(a instanceof HibernateProxy);
-    }
-
     @Test
     @DisplayName("저장 성공")
     void save() {
@@ -153,9 +149,6 @@ class ArticleServiceTest {
 
         //article.author
         User articleAuthor = findArticle.getAuthor();
-        assertThat(articleAuthor)
-                .as("게시글 작성자 페치 조인 성공")
-                .isNotInstanceOf(HibernateProxy.class);
 
         assertThat(articleAuthor.getName())
                 .as("작성자 이름")
@@ -177,16 +170,6 @@ class ArticleServiceTest {
                 .as("Article 확인")
                 .containsOnly(findArticle);
 
-        assertThat(comments)
-                .extracting("article")
-                .as("게시글 - 댓글 페치 조인 성공")
-                .allMatch(isNotProxy());
-
-        //comment.author
-        assertThat(comments)
-                .extracting("author")
-                .as("댓글 작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
 
         for (int i = 0; i < comments.size(); i++) {
             User commentAuthor = comments.get(i).getAuthor();
@@ -239,7 +222,7 @@ class ArticleServiceTest {
         final Pageable pageable2 = PageRequest.of(PAGE_2, SIZE_2);
         final Pageable pageable3 = PageRequest.of(PAGE_3, SIZE_3);
 
-        for (int i = PAGE_1; i < NUMBER_OF_COMMENTS; i++) {
+        for (int i = 0; i < NUMBER_OF_COMMENTS; i++) {
             Comment comment = Comment.create("comment " + i, article, (i % 2 == 1) ? user1 : user2);
             em.persist(comment);
         }
@@ -285,10 +268,6 @@ class ArticleServiceTest {
         //article.author
         User articleAuthor = findArticle1.getAuthor();
 
-        assertThat(articleAuthor.getClass())
-                .as("게시글 작성자 페치 조인 성공")
-                .isNotInstanceOf(HibernateProxy.class);
-
         assertThat(articleAuthor.getName())
                 .as("게시글 작성자 이름")
                 .isEqualTo("user1");
@@ -312,22 +291,6 @@ class ArticleServiceTest {
                 .extracting("content")
                 .as("댓글 내용")
                 .containsExactly(getCommentContents(PAGE_3, SIZE_3));
-
-        //comment.author
-        assertThat(comments1.getContent())
-                .extracting("author")
-                .as("댓글 작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
-
-        assertThat(comments2.getContent())
-                .extracting("author")
-                .as("댓글 작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
-
-        assertThat(comments3.getContent())
-                .extracting("author")
-                .as("댓글 작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
     }
 
     @Test

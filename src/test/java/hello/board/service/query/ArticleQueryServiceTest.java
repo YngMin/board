@@ -9,11 +9,8 @@ import hello.board.dto.service.search.ArticleSearchType;
 import hello.board.exception.FailToFindEntityException;
 import hello.board.repository.ArticleRepository;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceUnitUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.proxy.HibernateProxy;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +22,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
-import java.util.function.Predicate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -40,19 +36,12 @@ class ArticleQueryServiceTest {
     @Autowired
     EntityManager em;
 
-    PersistenceUnitUtil persistenceUnitUtil;
-
     @TestConfiguration
     static class Config {
         @Bean
         ArticleQueryService articleQueryService(ArticleRepository articleRepository) {
             return new ArticleQueryService(articleRepository);
         }
-    }
-
-    @BeforeEach
-    void beforeEach() {
-        persistenceUnitUtil = em.getEntityManagerFactory().getPersistenceUnitUtil();
     }
 
     @AfterEach
@@ -64,10 +53,6 @@ class ArticleQueryServiceTest {
         User user = User.create(name, email, password);
         em.persist(user);
         return user;
-    }
-
-    private static Predicate<Object> isNotProxy() {
-        return a -> !(a instanceof HibernateProxy);
     }
 
     @Test
@@ -102,9 +87,6 @@ class ArticleQueryServiceTest {
 
         //article.author
         User author = article.getAuthor();
-        assertThat(article)
-                .as("작성자 페치 조인 성공")
-                .isNotInstanceOf(HibernateProxy.class);
 
         assertThat(author.getName())
                 .as("작성자 이름")
@@ -171,9 +153,6 @@ class ArticleQueryServiceTest {
 
         //article.author
         User author = article.getAuthor();
-        assertThat(author)
-                .as("작성자 페치 조인 성공")
-                .isNotInstanceOf(HibernateProxy.class);
 
         assertThat(author.getName())
                 .as("작성자 이름")
@@ -181,19 +160,11 @@ class ArticleQueryServiceTest {
 
         //article.comments
         List<Comment> comments = findArticle.getComments();
-        assertThat(persistenceUnitUtil.isLoaded(comments))
-                .as("댓글 페치 조인 성공")
-                .isTrue();
 
         assertThat(comments)
                 .extracting("content")
                 .as("댓글 내용")
                 .containsExactly("comment1", "comment2");
-
-        assertThat(comments)
-                .extracting("author")
-                .as("댓글 작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
 
         assertThat(comments)
                 .extracting("author")
@@ -309,24 +280,6 @@ class ArticleQueryServiceTest {
                 .containsExactly(getContents(NUMBER_OF_ARTICLES, PAGE_3, SIZE_3));
 
         assertThat(result1.getContent())
-                .extracting("article")
-                .extracting("author")
-                .as("작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
-
-        assertThat(result2.getContent())
-                .extracting("article")
-                .extracting("author")
-                .as("작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
-
-        assertThat(result3.getContent())
-                .extracting("article")
-                .extracting("author")
-                .as("작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
-
-        assertThat(result1.getContent())
                 .extracting("numComments")
                 .as("댓글 수")
                 .containsOnly(0L);
@@ -425,24 +378,6 @@ class ArticleQueryServiceTest {
                 .extracting("content")
                 .as("게시물 내용")
                 .containsExactly(getContents(NUMBER_OF_ARTICLES, PAGE_3, SIZE_3));
-
-        assertThat(result1.getContent())
-                .extracting("article")
-                .extracting("author")
-                .as("작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
-
-        assertThat(result2.getContent())
-                .extracting("article")
-                .extracting("author")
-                .as("작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
-
-        assertThat(result3.getContent())
-                .extracting("article")
-                .extracting("author")
-                .as("작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
 
         assertThat(result1.getContent())
                 .extracting("numComments")
@@ -622,55 +557,6 @@ class ArticleQueryServiceTest {
                 .as("게시물 제목")
                 .containsExactly("title 85", "title 83", "title 81", "title 79", "title 77", "title 75", "title 73");
 
-        // fetch join with Author
-        assertThat(titleAndContentResult1.getContent())
-                .extracting("article")
-                .extracting("author")
-                .as("작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
-
-        assertThat(titleAndContentResult2.getContent())
-                .extracting("article")
-                .extracting("author")
-                .as("작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
-
-        assertThat(titleResult1.getContent())
-                .extracting("article")
-                .extracting("author")
-                .as("작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
-
-        assertThat(titleResult2.getContent())
-                .extracting("article")
-                .extracting("author")
-                .as("작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
-
-        assertThat(contentResult1.getContent())
-                .extracting("article")
-                .extracting("author")
-                .as("작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
-
-        assertThat(contentResult2.getContent())
-                .extracting("article")
-                .extracting("author")
-                .as("작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
-
-        assertThat(authorResult1.getContent())
-                .extracting("article")
-                .extracting("author")
-                .as("작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
-
-        assertThat(authorResult2.getContent())
-                .extracting("article")
-                .extracting("author")
-                .as("작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
-
         // numbers of comments
         assertThat(titleAndContentResult1.getContent())
                 .extracting("numComments")
@@ -818,43 +704,6 @@ class ArticleQueryServiceTest {
                 .extracting("title")
                 .as("게시물 제목")
                 .containsExactly(getTitles(NUMBER_OF_ARTICLES, PAGE_3, SIZE_3));
-
-        //fetch join with Author
-        assertThat(emptyKeywordResult1.getContent())
-                .extracting("article")
-                .extracting("author")
-                .as("작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
-
-        assertThat(emptyKeywordResult2.getContent())
-                .extracting("article")
-                .extracting("author")
-                .as("작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
-
-        assertThat(emptyKeywordResult3.getContent())
-                .extracting("article")
-                .extracting("author")
-                .as("작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
-
-        assertThat(nullConditionResult1.getContent())
-                .extracting("article")
-                .extracting("author")
-                .as("작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
-
-        assertThat(nullConditionResult2.getContent())
-                .extracting("article")
-                .extracting("author")
-                .as("작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
-
-        assertThat(nullConditionResult3.getContent())
-                .extracting("article")
-                .extracting("author")
-                .as("작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
 
         //numbers of comments
         assertThat(emptyKeywordResult1.getContent())

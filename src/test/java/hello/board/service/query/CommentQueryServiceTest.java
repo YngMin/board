@@ -5,6 +5,7 @@ import hello.board.domain.Comment;
 import hello.board.domain.User;
 import hello.board.exception.FailToFindEntityException;
 import hello.board.exception.WrongPageRequestException;
+import hello.board.repository.ArticleRepository;
 import hello.board.repository.CommentRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceUnitUtil;
@@ -42,8 +43,8 @@ class CommentQueryServiceTest {
     static class Config {
 
         @Bean
-        CommentQueryService commentQueryService(CommentRepository commentRepository) {
-            return new CommentQueryService(commentRepository);
+        CommentQueryService commentQueryService(ArticleRepository articleRepository, CommentRepository commentRepository) {
+            return new CommentQueryService(articleRepository, commentRepository);
         }
     }
 
