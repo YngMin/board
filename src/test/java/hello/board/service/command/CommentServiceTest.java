@@ -10,9 +10,6 @@ import hello.board.exception.NoAuthorityException;
 import hello.board.repository.ArticleRepository;
 import hello.board.repository.CommentRepository;
 import hello.board.repository.UserRepository;
-import jakarta.persistence.EntityManager;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,18 +17,26 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 
+import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@Slf4j
 @DataJpaTest
 class CommentServiceTest {
 
     @Autowired
     CommentService commentService;
-
+    
     @Autowired
-    EntityManager em;
+    UserRepository userRepository;
+    
+    @Autowired
+    ArticleRepository articleRepository;
+    
+    @Autowired
+    CommentRepository commentRepository;
+
 
     @TestConfiguration
     static class Config {
@@ -42,20 +47,15 @@ class CommentServiceTest {
         }
     }
 
-    @AfterEach
-    void afterEach() {
-        em.clear();
-    }
-
-    private User createUserAndPersist(String name, String email, String password) {
+    private User createAndSaveUser(String name, String email, String password) {
         User user = User.create(name, email, password);
-        em.persist(user);
+        userRepository.save(user);
         return user;
     }
 
-    private Article createArticleAndPersist(String title, String content, User author) {
+    private Article createAndSaveArticle(String title, String content, User author) {
         Article article = Article.create(title, content, author);
-        em.persist(article);
+        articleRepository.save(article);
         return article;
     }
 
@@ -63,149 +63,264 @@ class CommentServiceTest {
     @DisplayName("저장 성공")
     void save() {
         //given
-        User user = createUserAndPersist("user", "test@gmail.com", "1234");
-        Article article = createArticleAndPersist("title", "content", user);
+        User author = createAndSaveUser("author", "author@board.com", "");
+        Article article = createAndSaveArticle("title", "content", author);
+
+        final Long authorId = author.getId();
+        final Long articleId = article.getId();
 
         //when
-        final Long id = commentService.save(article.getId(), user.getId(), Save.create("comment"));
-
-        em.flush();
-        em.clear();
-
+        final Long id = commentService.save(articleId, authorId, Save.create("comment"));
+        
         //then
-        Comment comment = em.find(Comment.class, id);
+        Comment comment = commentRepository.findById(id).orElseThrow();
 
         assertThat(comment.getContent())
                 .as("내용")
                 .isEqualTo("comment");
+        
+        assertThat(comment.getAuthor())
+                .as("작성자")
+                .isEqualTo(author);
     }
 
     @Test
-    @DisplayName("저장 실패")
-    void save_fail() {
+    @DisplayName("저장 실패 - 존재하지 않는 게시글 ID")
+    void save_fail_wrongArticleId() {
         //given
-        User user = createUserAndPersist("user", "test@gmail.com", "1234");
-        Article article = createArticleAndPersist("title", "content", user);
-
+        User author = createAndSaveUser("author", "author@board.com", "");
+        Article article = createAndSaveArticle("title", "content", author);
+        
+        final Long authorId = author.getId();
         final Long WRONG_ID = 4444L;
 
         //when & then
-        assertThatThrownBy(() -> commentService.save(WRONG_ID, user.getId(), Save.create("comment")))
+        assertThatThrownBy(() -> commentService.save(WRONG_ID, authorId, Save.create("comment")))
                 .as("존재하지 않는 게시글 ID")
                 .isInstanceOf(FailToFindEntityException.class);
+    }
 
-        assertThatThrownBy(() -> commentService.save(article.getId(), WRONG_ID, Save.create("comment")))
+    @Test
+    @DisplayName("저장 실패 - 존재하지 않는 사용자 ID")
+    void save_fail_wrongUserId() {
+        //given
+        User author = createAndSaveUser("author", "author@board.com", "");
+        Article article = createAndSaveArticle("title", "content", author);
+
+        final Long articleId = article.getId();
+        final Long WRONG_ID = 4444L;
+
+        //when & then
+        assertThatThrownBy(() -> commentService.save(articleId, WRONG_ID, Save.create("comment")))
                 .as("존재하지 않는 사용자 ID")
                 .isInstanceOf(FailToFindEntityException.class);
     }
 
     @Test
-    @DisplayName("수정 성공")
-    void update() {
+    @DisplayName("수정 성공 - 내용")
+    void update_content() {
         //given
-        User user = createUserAndPersist("user", "test@gmail.com", "1234");
-        final Long userId = user.getId();
-        Article article = createArticleAndPersist("title", "content", user);
+        User author = createAndSaveUser("author", "author@board.com", "");
+        Article article = createAndSaveArticle("title", "content", author);
+
+        final Long authorId = author.getId();
         final Long articleId = article.getId();
 
-        Comment comment = Comment.create("comment", article, user);
-        em.persist(comment);
+        Comment comment = Comment.create("comment", article, author);
+        commentRepository.save(comment);
+
         final Long id = comment.getId();
 
-        em.flush();
-        em.clear();
+        //when
+        commentService.update(id, articleId, authorId, Update.create("commentUpdate"));
 
-        //when 1
-        commentService.update(id, articleId, userId, Update.create("modifiedComment"));
+        //then
+        Comment updatedComment = commentRepository.findById(id).orElseThrow();
 
-        em.flush();
-        em.clear();
-
-        //then 1
-        Comment updatedComment1 = em.find(Comment.class, id);
-
-        assertThat(updatedComment1.getContent())
+        assertThat(updatedComment.getContent())
                 .as("내용 수정")
-                .isEqualTo("modifiedComment");
-
-        //when 2
-        commentService.update(id, articleId, userId, Update.create(null));
-
-        em.flush();
-        em.clear();
-
-        //then 2
-        Comment updatedComment2 = em.find(Comment.class, id);
-
-        assertThat(updatedComment2.getContent())
-                .as("내용 수정되지 않음")
-                .isEqualTo("modifiedComment");
-
-        //when 3
-        commentService.update(id, articleId, userId, null);
-
-        em.flush();
-        em.clear();
-
-        //then 3
-        Comment updatedComment3 = em.find(Comment.class, id);
-
-        assertThat(updatedComment3.getContent())
-                .as("내용 수정되지 않음")
-                .isEqualTo("modifiedComment");
-
+                .isEqualTo("commentUpdate");
     }
 
     @Test
-    @DisplayName("수정 실패")
-    void update_fail() {
+    @DisplayName("수정 성공 - 빈 UpdateDto")
+    void update_content_empty() {
         //given
-        User user1 = createUserAndPersist("user1", "test1@gmail.com", "12341");
-        final Long user1Id = user1.getId();
+        User author = createAndSaveUser("author", "author@board.com", "");
+        Article article = createAndSaveArticle("title", "content", author);
 
-        User user2 = createUserAndPersist("user2", "test2@gmail.com", "12342");
-        final Long user2Id = user2.getId();
+        final Long authorId = author.getId();
+        final Long articleId = article.getId();
 
-        Article article1 = createArticleAndPersist("title1", "content1", user1);
-        final Long article1Id = article1.getId();
-
-        Article article2 = createArticleAndPersist("title2", "content2", user2);
-        final Long article2Id = article2.getId();
-
-        Comment comment = Comment.create("comment", article1, user1);
-
-        em.persist(comment);
+        Comment comment = Comment.create("comment", article, author);
+        commentRepository.save(comment);
 
         final Long id = comment.getId();
 
+        //when
+        commentService.update(id, articleId, authorId, Update.create(null));
+
+        //then
+        Comment updatedComment = commentRepository.findById(id).orElseThrow();
+
+        assertThat(updatedComment.getContent())
+                .as("내용 수정되지 않음")
+                .isEqualTo("comment");
+    }
+
+    @Test
+    @DisplayName("수정 성공 - null")
+    void update_content_null() {
+        //given
+        User author = createAndSaveUser("author", "author@board.com", "");
+        Article article = createAndSaveArticle("title", "content", author);
+
+        final Long authorId = author.getId();
+        final Long articleId = article.getId();
+
+        Comment comment = Comment.create("comment", article, author);
+        commentRepository.save(comment);
+
+        final Long id = comment.getId();
+
+        //when
+        commentService.update(id, articleId, authorId, null);
+
+        //then
+        Comment updatedComment = commentRepository.findById(id).orElseThrow();
+
+        assertThat(updatedComment.getContent())
+                .as("내용 수정되지 않음")
+                .isEqualTo("comment");
+    }
+
+    @Test
+    @DisplayName("수정 실패 - 존재하지 않는 댓글 ID로 수정 시도")
+    void update_fail_wrongId() {
+        //given
+        User author = createAndSaveUser("author", "author@board.com", "");
+        Article article = createAndSaveArticle("title", "content", author);
+
+        final Long authorId = author.getId();
+        final Long articleId = article.getId();
+
+        Comment comment = Comment.create("comment", article, author);
+        commentRepository.save(comment);
+
         final Long WRONG_ID = 4444L;
 
-        em.flush();
-        em.clear();
-
         //when & then
-        assertThatThrownBy(() -> commentService.update(WRONG_ID, article1Id, user1Id, Update.create("modifiedComment")))
+        assertThatThrownBy(() -> commentService.update(WRONG_ID, articleId, authorId, Update.create("")))
                 .as("존재하지 않는 댓글 ID")
                 .isInstanceOf(FailToFindEntityException.class);
+    }
 
-        assertThatThrownBy(() -> commentService.update(id, article2Id, user1Id, Update.create("modifiedComment")))
-                .as("다른 게시글 ID")
+    @Test
+    @DisplayName("수정 실패 - 다른 게시글 ID로 수정 시도")
+    void update_fail_otherArticleId() {
+        //given
+        User author = createAndSaveUser("author", "author@board.com", "");
+        Article article = createAndSaveArticle("title", "content", author);
+        Article other = createAndSaveArticle("other", "other", author);
+
+        final Long authorId = author.getId();
+        final Long OTHER_ARTICLE_ID = other.getId();
+
+        Comment comment = Comment.create("comment", article, author);
+        commentRepository.save(comment);
+
+        final Long id = comment.getId();
+
+        //when & then
+        assertThatThrownBy(() -> commentService.update(id, OTHER_ARTICLE_ID, authorId, Update.create("")))
+                .as("다른 게시글 ID로 수정")
                 .isInstanceOf(IllegalArgumentException.class);
+    }
 
-        assertThatThrownBy(() -> commentService.update(id, WRONG_ID, user1Id, Update.create("modifiedComment")))
-                .as("존재하지 않는 게시글 ID")
+    @Test
+    @DisplayName("수정 실패 - 존재하지 않는 게시글 ID로 수정 시도")
+    void update_fail_wrongArticleId() {
+        //given
+        User author = createAndSaveUser("author", "author@board.com", "");
+        Article article = createAndSaveArticle("title", "content", author);
+
+        final Long authorId = author.getId();
+        final Long WRONG_ARTICLE_ID = 4444L;
+
+        Comment comment = Comment.create("comment", article, author);
+        commentRepository.save(comment);
+
+        final Long id = comment.getId();
+
+        //when & then
+        assertThatThrownBy(() -> commentService.update(id, WRONG_ARTICLE_ID, authorId, Update.create("")))
+                .as("존재하지 않는 게시글 ID로 수정")
                 .isInstanceOf(IllegalArgumentException.class);
+    }
 
-        assertThatThrownBy(() -> commentService.update(id, article1Id, user2Id, Update.create("modifiedComment")))
+    @Test
+    @DisplayName("수정 실패 - 작성자가 아닌 사용자의 수정 시도")
+    void update_fail_noAuthority() {
+        //given
+        User author = createAndSaveUser("author", "author@board.com", "");
+        User other = createAndSaveUser("other", "other@board.com", "");
+        Article article = createAndSaveArticle("title", "content", author);
+
+        final Long OTHER_USER_ID = other.getId();
+        final Long articleId = article.getId();
+
+        Comment comment = Comment.create("comment", article, author);
+        commentRepository.save(comment);
+
+        final Long id = comment.getId();
+
+        //when & then
+        assertThatThrownBy(() -> commentService.update(id, articleId, OTHER_USER_ID, Update.create("")))
                 .as("작성자가 아닌 사용자의 수정")
                 .isInstanceOf(NoAuthorityException.class);
+    }
 
-        assertThatThrownBy(() -> commentService.update(id, article1Id, WRONG_ID, Update.create("modifiedComment")))
-                .as("작성자가 아닌 사용자의 수정 - 존재하지 않는 사용자 ID")
+    @Test
+    @DisplayName("수정 실패 - 존재하지 않는 사용자 ID로 수정 시도")
+    void update_fail_wrongUserId() {
+        //given
+        User author = createAndSaveUser("author", "author@board.com", "");
+        Article article = createAndSaveArticle("title", "content", author);
+
+        final Long WRONG_USER_ID = 4444L;
+        final Long articleId = article.getId();
+
+        Comment comment = Comment.create("comment", article, author);
+        commentRepository.save(comment);
+
+        final Long id = comment.getId();
+
+        //when & then
+        assertThatThrownBy(() -> commentService.update(id, articleId, WRONG_USER_ID, Update.create("")))
+                .as("존재하지 않는 사용자 ID로 수정")
                 .isInstanceOf(NoAuthorityException.class);
+    }
 
-        assertThatThrownBy(() -> commentService.update(id, article2Id, user2Id, Update.create("modifiedComment")))
-                .as("다른 게시글 ID & 작성자가 아닌 사용자의 ID")
+    @Test
+    @DisplayName("수정 실패 - 작성자가 아닌 사용자가 다른 게시글 ID로 수정 시도")
+    void update_fail_otherUser_otherAuthor() {
+        //given
+        User author = createAndSaveUser("author", "author@board.com", "");
+        User otherUser = createAndSaveUser("other", "other@board.com", "");
+        Article article = createAndSaveArticle("title", "content", author);
+        Article otherArticle = createAndSaveArticle("other", "other", otherUser);
+
+        final Long OTHER_USER_ID = otherUser.getId();
+        final Long OTHER_ARTICLE_ID = otherArticle.getId();
+
+        Comment comment = Comment.create("comment", article, author);
+        commentRepository.save(comment);
+
+        final Long id = comment.getId();
+
+        //when & then
+        assertThatThrownBy(() -> commentService.update(id, OTHER_ARTICLE_ID, OTHER_USER_ID, Update.create("")))
+                .as("작성자가 아닌 사용자 + 다른 게시글 수정 ")
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -213,83 +328,155 @@ class CommentServiceTest {
     @DisplayName("삭제 성공")
     void delete() {
         //given
-        User user = createUserAndPersist("user", "test@gmail.com", "1234");
-        final Long userId = user.getId();
-        Article article = createArticleAndPersist("title", "content", user);
+        User author = createAndSaveUser("author", "author@board.com", "");
+        Article article = createAndSaveArticle("title", "content", author);
+
+        final Long authorId = author.getId();
         final Long articleId = article.getId();
 
-        Comment comment = Comment.create("comment", article, user);
-        em.persist(comment);
+        Comment comment = Comment.create("comment", article, author);
+        commentRepository.save(comment);
+
         final Long id = comment.getId();
 
-        em.flush();
-        em.clear();
-
         //when
-        commentService.delete(id, articleId, userId);
-
-        em.flush();
-        em.clear();
+        commentService.delete(id, articleId, authorId);
 
         //then
-        Comment findComment = em.find(Comment.class, id);
+        Optional<Comment> commentOptional = commentRepository.findById(id);
 
-        assertThat(findComment)
+        assertThat(commentOptional.isEmpty())
                 .as("삭제된 댓글")
-                .isNull();
+                .isTrue();
     }
 
     @Test
-    @DisplayName("삭제 실패")
-    void delete_fail() {
+    @DisplayName("삭제 실패 - 존재하지 않는 댓글 ID로 삭제 시도")
+    void delete_fail_wrongId() {
         //given
-        User user1 = createUserAndPersist("user1", "test1@gmail.com", "12341");
-        final Long user1Id = user1.getId();
+        User author = createAndSaveUser("author", "author@board.com", "");
+        Article article = createAndSaveArticle("title", "content", author);
 
-        User user2 = createUserAndPersist("user2", "test2@gmail.com", "12342");
-        final Long user2Id = user2.getId();
+        final Long authorId = author.getId();
+        final Long articleId = article.getId();
 
-        Article article1 = createArticleAndPersist("title1", "content1", user1);
-        final Long article1Id = article1.getId();
-
-        Article article2 = createArticleAndPersist("title2", "content2", user2);
-        final Long article2Id = article2.getId();
-
-        Comment comment = Comment.create("comment", article1, user1);
-
-        em.persist(comment);
-
-        final Long id = comment.getId();
+        Comment comment = Comment.create("comment", article, author);
+        commentRepository.save(comment);
 
         final Long WRONG_ID = 4444L;
 
-        em.flush();
-        em.clear();
-
         //when & then
-        assertThatThrownBy(() -> commentService.delete(WRONG_ID, article1Id, user1Id))
+        assertThatThrownBy(() -> commentService.delete(WRONG_ID, articleId, authorId))
                 .as("존재하지 않는 댓글 ID")
                 .isInstanceOf(FailToFindEntityException.class);
+    }
 
-        assertThatThrownBy(() -> commentService.delete(id, article2Id, user1Id))
-                .as("다른 게시글 ID")
-                .isInstanceOf(IllegalArgumentException.class);
+    @Test
+    @DisplayName("삭제 실패 - 다른 게시글 ID로 삭제 시도")
+    void delete_fail_otherArticleId() {
+        //given
+        User author = createAndSaveUser("author", "author@board.com", "");
+        Article article = createAndSaveArticle("title", "content", author);
+        Article other = createAndSaveArticle("other", "other", author);
 
-        assertThatThrownBy(() -> commentService.delete(id, WRONG_ID, user1Id))
-                .as("존재하지 않는 게시글 ID")
-                .isInstanceOf(IllegalArgumentException.class);
+        final Long authorId = author.getId();
+        final Long OTHER_ARTICLE_ID = other.getId();
 
-        assertThatThrownBy(() -> commentService.delete(id, article1Id, user2Id))
-                .as("작성자가 아닌 사용자의 삭제")
-                .isInstanceOf(NoAuthorityException.class);
+        Comment comment = Comment.create("comment", article, author);
+        commentRepository.save(comment);
 
-        assertThatThrownBy(() -> commentService.delete(id, article1Id, WRONG_ID))
-                .as("작성자가 아닌 사용자의 삭제 - 존재하지 않는 사용자 ID")
-                .isInstanceOf(NoAuthorityException.class);
+        final Long id = comment.getId();
 
-        assertThatThrownBy(() -> commentService.delete(id, article2Id, user2Id))
-                .as("다른 게시글 ID & 작성자가 아닌 사용자의 ID")
+        //when & then
+        assertThatThrownBy(() -> commentService.delete(id, OTHER_ARTICLE_ID, authorId))
+                .as("다른 게시글 ID로 삭제")
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
+    @Test
+    @DisplayName("삭제 실패 - 존재하지 않는 게시글 ID로 삭제 시도")
+    void delete_fail_wrongArticleId() {
+        //given
+        User author = createAndSaveUser("author", "author@board.com", "");
+        Article article = createAndSaveArticle("title", "content", author);
+
+        final Long authorId = author.getId();
+        final Long WRONG_ARTICLE_ID = 4444L;
+
+        Comment comment = Comment.create("comment", article, author);
+        commentRepository.save(comment);
+
+        final Long id = comment.getId();
+
+        //when & then
+        assertThatThrownBy(() -> commentService.delete(id, WRONG_ARTICLE_ID, authorId))
+                .as("존재하지 않는 게시글 ID로 삭제")
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("삭제 실패 - 작성자가 아닌 사용자의 삭제 시도")
+    void delete_fail_noAuthority() {
+        //given
+        User author = createAndSaveUser("author", "author@board.com", "");
+        User other = createAndSaveUser("other", "other@board.com", "");
+        Article article = createAndSaveArticle("title", "content", author);
+
+        final Long OTHER_USER_ID = other.getId();
+        final Long articleId = article.getId();
+
+        Comment comment = Comment.create("comment", article, author);
+        commentRepository.save(comment);
+
+        final Long id = comment.getId();
+
+        //when & then
+        assertThatThrownBy(() -> commentService.delete(id, articleId, OTHER_USER_ID))
+                .as("작성자가 아닌 사용자의 삭제")
+                .isInstanceOf(NoAuthorityException.class);
+    }
+
+    @Test
+    @DisplayName("삭제 실패 - 존재하지 않는 사용자 ID로 삭제 시도")
+    void delete_fail_wrongUserId() {
+        //given
+        User author = createAndSaveUser("author", "author@board.com", "");
+        Article article = createAndSaveArticle("title", "content", author);
+
+        final Long WRONG_USER_ID = 4444L;
+        final Long articleId = article.getId();
+
+        Comment comment = Comment.create("comment", article, author);
+        commentRepository.save(comment);
+
+        final Long id = comment.getId();
+
+        //when & then
+        assertThatThrownBy(() -> commentService.delete(id, articleId, WRONG_USER_ID))
+                .as("존재하지 않는 사용자 ID로 삭제")
+                .isInstanceOf(NoAuthorityException.class);
+    }
+
+    @Test
+    @DisplayName("삭제 실패 - 작성자가 아닌 사용자가 다른 게시글 ID로 삭제 시도")
+    void delete_fail_otherUser_otherAuthor() {
+        //given
+        User author = createAndSaveUser("author", "author@board.com", "");
+        User otherUser = createAndSaveUser("other", "other@board.com", "");
+        Article article = createAndSaveArticle("title", "content", author);
+        Article otherArticle = createAndSaveArticle("other", "other", otherUser);
+
+        final Long OTHER_USER_ID = otherUser.getId();
+        final Long OTHER_ARTICLE_ID = otherArticle.getId();
+
+        Comment comment = Comment.create("comment", article, author);
+        commentRepository.save(comment);
+
+        final Long id = comment.getId();
+
+        //when & then
+        assertThatThrownBy(() -> commentService.delete(id, OTHER_ARTICLE_ID, OTHER_USER_ID))
+                .as("작성자가 아닌 사용자 + 다른 게시글 삭제")
+                .isInstanceOf(IllegalArgumentException.class);
+    }
 }
