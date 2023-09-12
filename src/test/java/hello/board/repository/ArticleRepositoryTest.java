@@ -6,7 +6,6 @@ import hello.board.domain.User;
 import hello.board.dto.service.ArticleCommentFlatDto;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceUnitUtil;
-import org.hibernate.proxy.HibernateProxy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -17,13 +16,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Predicate;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DataJpaTest
 class ArticleRepositoryTest {
@@ -34,21 +31,18 @@ class ArticleRepositoryTest {
     @Autowired
     EntityManager em;
 
-    PersistenceUnitUtil persistenceUnitUtil;
+    PersistenceUnitUtil persistence;
 
     @BeforeEach
     void beforeEach() {
-        persistenceUnitUtil = em.getEntityManagerFactory().getPersistenceUnitUtil();
+        persistence = em.getEntityManagerFactory().getPersistenceUnitUtil();
     }
     @AfterEach
     void afterEach() {
         em.clear();
     }
 
-    private static Predicate<Object> isNotProxy() {
-        return a -> !(a instanceof HibernateProxy);
-    }
-    private User createUserAndPersist(String name, String email, String password) {
+    private User createAndSaveUser(String name, String email, String password) {
         User user = User.create(name, email, password);
         em.persist(user);
         return user;
@@ -59,9 +53,9 @@ class ArticleRepositoryTest {
     @DisplayName("findById 성공")
     void findById() {
         //given
-        User user = createUserAndPersist("user", "test@gmail.com", "1234");
+        User author = createAndSaveUser("author", "author@board.com", "");
 
-        Article article = Article.create("title", "content", user);
+        Article article = Article.create("title", "content", author);
         em.persist(article);
 
         final Long id = article.getId();
@@ -74,31 +68,36 @@ class ArticleRepositoryTest {
 
         //then
         //article
-        assertThat(findArticle.getTitle())
-                .as("제목")
-                .isEqualTo("title");
-
-        assertThat(findArticle.getContent())
-                .as("내용")
-                .isEqualTo("content");
+        assertThat(findArticle)
+                .as("게시글")
+                .isEqualTo(article);
 
         assertThat(findArticle.getView())
                 .as("조회수")
                 .isEqualTo(0L);
 
         //article.author
-        assertThat(article.getAuthor())
+        User findArticleAuthor = findArticle.getAuthor();
+        assertThat(persistence.isLoaded(findArticleAuthor))
                 .as("작성자 페치 조인 성공")
-                .isNotInstanceOf(HibernateProxy.class);
+                .isTrue();
+
+        assertThat(findArticleAuthor)
+                .as("작성자")
+                .isEqualTo(author);
+
+        assertThat(persistence.isLoaded(findArticle.getComments()))
+                .as("댓글 로딩 지연")
+                .isFalse();
     }
 
     @Test
     @DisplayName("findById 실패")
     void findById_fail() {
         //given
-        User user = createUserAndPersist("user", "test@gmail.com", "1234");
+        User author = createAndSaveUser("author", "author@board.com", "");
 
-        Article article = Article.create("title", "content", user);
+        Article article = Article.create("title", "content", author);
         em.persist(article);
 
         final Long WRONG_ID = 4444L;
@@ -119,15 +118,15 @@ class ArticleRepositoryTest {
     @DisplayName("댓글과 함께 조회 성공")
     void findWithComments_noPaging() {
         //given
-        User user1 = createUserAndPersist("user1", "test1@gmail.com", "12341");
-        User user2 = createUserAndPersist("user2", "test2@gmail.com", "12342");
+        User author1 = createAndSaveUser("author1", "author1@board.com", "");
+        User author2 = createAndSaveUser("author2", "author2@board.com", "");
 
-        Article article = Article.create("title", "content", user1);
+        Article article = Article.create("title", "content", author1);
         em.persist(article);
         final Long id = article.getId();
 
-        Comment comment1 = Comment.create("comment1", article, user1);
-        Comment comment2 = Comment.create("comment2", article, user2);
+        Comment comment1 = Comment.create("comment1", article, author1);
+        Comment comment2 = Comment.create("comment2", article, author2);
 
         em.persist(comment1);
         em.persist(comment2);
@@ -140,53 +139,59 @@ class ArticleRepositoryTest {
 
         //then
         //article
-        assertThat(findArticle.getTitle())
-                .as("제목")
-                .isEqualTo("title");
-
-        assertThat(findArticle.getContent())
-                .as("내용")
-                .isEqualTo("content");
+        assertThat(findArticle)
+                .as("게시글")
+                .isEqualTo(article);
 
         assertThat(findArticle.getView())
                 .as("조회수")
                 .isEqualTo(0L);
 
         //article.author
-        assertThat(article.getAuthor())
+        User findArticleAuthor = article.getAuthor();
+        assertThat(persistence.isLoaded(findArticleAuthor))
                 .as("작성자 페치 조인 성공")
-                .isNotInstanceOf(HibernateProxy.class);
+                .isTrue();
+
+        assertThat(findArticleAuthor)
+                .as("작성자")
+                .isEqualTo(author1);
 
         //article.comments
-        List<Comment> comments = findArticle.getComments();
+        List<Comment> findComments = findArticle.getComments();
 
-        assertThat(persistenceUnitUtil.isLoaded(comments))
+        assertThat(persistence.isLoaded(findComments))
                 .as("댓글 페치 조인 성공")
                 .isTrue();
 
-        assertThat(comments.size())
-                .as("조회된 댓글 수")
-                .isEqualTo(2);
+        assertThat(findComments)
+                .as("댓글")
+                .containsExactly(comment1, comment2);
 
         //article.comments[*].author
-        assertThat(comments)
+        assertThat(findComments)
                 .extracting("author")
                 .as("댓글 작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
+                .allMatch(persistence::isLoaded);
+
+        assertThat(findComments)
+                .extracting("author")
+                .as("댓글 작성자")
+                .containsExactly(author1, author2);
     }
 
     @Test
     @DisplayName("댓글과 함께 조회 실패")
     void findWithComments_noPaging_fail() {
         //given
-        User user1 = createUserAndPersist("user1", "test1@gmail.com", "12341");
-        User user2 = createUserAndPersist("user2", "test2@gmail.com", "12342");
+        User author1 = createAndSaveUser("author1", "author1@board.com", "");
+        User author2 = createAndSaveUser("author2", "author2@board.com", "");
 
-        Article article = Article.create("title", "content", user1);
+        Article article = Article.create("title", "content", author1);
         em.persist(article);
 
-        Comment comment1 = Comment.create("comment1", article, user1);
-        Comment comment2 = Comment.create("comment2", article, user2);
+        Comment comment1 = Comment.create("comment1", article, author1);
+        Comment comment2 = Comment.create("comment2", article, author2);
 
         em.persist(comment1);
         em.persist(comment2);
@@ -205,26 +210,24 @@ class ArticleRepositoryTest {
                 .isTrue();
     }
 
-
     @Test
     @DisplayName("페이징된 댓글과 함께 조회 성공")
     void findWithComments_paging() {
         //given
-        User user1 = createUserAndPersist("user1", "test1@gmail.com", "12341");
-        User user2 = createUserAndPersist("user2", "test2@gmail.com", "12342");
+        User author1 = createAndSaveUser("author1", "author1@board.com", "");
+        User author2 = createAndSaveUser("author2", "author2@board.com", "");
+        User author3 = createAndSaveUser("author3", "author3@board.com", "");
 
-        Article article = Article.create("title", "content", user1);
+        Article article = Article.create("title", "content", author1);
         em.persist(article);
         final Long id = article.getId();
 
-        final int NUMBER_OF_COMMENTS = 123;
-        final int PAGE = 2, SIZE = 20;
+        final int NUMBER_OF_COMMENTS = 20;
+        final int PAGE = 1, SIZE = 5;
         final Pageable pageable = PageRequest.of(PAGE, SIZE);
 
-        for (int i = 0; i < NUMBER_OF_COMMENTS; i++) {
-            Comment comment = Comment.create("comment " + i, article, (i % 2 == 1) ? user1 : user2);
-            em.persist(comment);
-        }
+        List<Comment> comments = generateComments(article, NUMBER_OF_COMMENTS, author1, author2, author3);
+        comments.forEach(em::persist);
 
         em.flush();
         em.clear();
@@ -238,59 +241,78 @@ class ArticleRepositoryTest {
         //article
         assertThat(content)
                 .extracting("article")
-                .as("동일한 article 엔티티")
-                .allMatch(isSameArticle(id));
+                .as("동일한 게시글")
+                .containsOnly(article);
 
         Article findArticle = content.stream()
                 .map(ArticleCommentFlatDto::getArticle)
                 .findAny()
                 .orElseThrow();
 
-        assertThat(findArticle.getTitle())
-                .as("제목")
-                .isEqualTo("title");
-
-        assertThat(findArticle.getContent())
-                .as("내용")
-                .isEqualTo("content");
-
         assertThat(findArticle.getView())
                 .as("조회수")
                 .isEqualTo(0L);
 
         //article.author
-        assertThat(findArticle.getAuthor())
-                .as("게시글 작성자 페치 조인 성공")
-                .isNotInstanceOf(HibernateProxy.class);
+        User findArticleAuthor = findArticle.getAuthor();
+        assertThat(persistence.isLoaded(findArticleAuthor))
+                .as("게시글 작성자 페치 조인")
+                .isTrue();
+
+        assertThat(findArticleAuthor)
+                .as("게시글 작성자")
+                .isEqualTo(author1);
+
+        //article.comments
+        assertThat(content)
+                .extracting("comment")
+                .as("댓글 작성자")
+                .containsExactlyElementsOf(comments.subList(5, 10));
 
         //article.comments[*].author
         assertThat(content)
                 .extracting("comment")
                 .extracting("author")
-                .as("댓글 작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
+                .as("댓글 작성자 페치 조인")
+                .allMatch(persistence::isLoaded);
 
+        assertThat(content)
+                .extracting("comment")
+                .extracting("author")
+                .as("댓글 작성자")
+                .containsExactly(author3, author1, author2, author3, author1);
+    }
+
+    private static List<Comment> generateComments(Article article, int numOfComments, User... authors) {
+        List<Comment> comments = new ArrayList<>();
+        for (int i = 0; i < numOfComments; i++) {
+            Comment comment = Comment.create(
+                    "content" + i,
+                    article,
+                    authors[i % authors.length]
+            );
+            comments.add(comment);
+        }
+        return comments;
     }
 
     @Test
     @DisplayName("페이징된 댓글과 함께 조회 실패")
     void findWithComments_paging_fail() {
         //given
-        User user1 = createUserAndPersist("user1", "test1@gmail.com", "12341");
-        User user2 = createUserAndPersist("user2", "test2@gmail.com", "12342");
+        User author1 = createAndSaveUser("author1", "author1@board.com", "");
+        User author2 = createAndSaveUser("author2", "author2@board.com", "");
+        User author3 = createAndSaveUser("author3", "author3@board.com", "");
 
-        Article article = Article.create("title", "content", user1);
+        Article article = Article.create("title", "content", author1);
         em.persist(article);
 
         final Long WRONG_ID = 666L;
-        final int NUMBER_OF_COMMENTS = 123;
-        final int PAGE = 2, SIZE = 20;
+        final int NUMBER_OF_COMMENTS = 20;
+        final int PAGE = 2, SIZE = 5;
         final Pageable pageable = PageRequest.of(PAGE, SIZE);
 
-        for (int i = 0; i < NUMBER_OF_COMMENTS; i++) {
-            Comment comment = Comment.create("comment " + i, article, (i % 2 == 1) ? user1 : user2);
-            em.persist(comment);
-        }
+        generateComments(article, NUMBER_OF_COMMENTS, author1, author2, author3);
 
         em.flush();
         em.clear();
@@ -304,12 +326,4 @@ class ArticleRepositoryTest {
                 .isTrue();
     }
 
-    private static Predicate<Object> isSameArticle(Long id) {
-        return o -> {
-            if (o instanceof Article findArticle) {
-                return Objects.equals(findArticle.getId(), id);
-            }
-            return false;
-        };
-    }
 }

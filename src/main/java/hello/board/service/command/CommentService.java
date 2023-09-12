@@ -69,7 +69,7 @@ public class CommentService {
     }
 
     private static void validateArticle(Comment comment, Long articleId) {
-        if (!comment.isIdOfMyArticle(articleId)) {
+        if (comment.isNotMyArticle(articleId)) {
             throw new IllegalArgumentException("This Article does not have this Comment");
         }
     }

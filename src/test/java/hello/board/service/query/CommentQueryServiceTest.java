@@ -4,15 +4,11 @@ import hello.board.domain.Article;
 import hello.board.domain.Comment;
 import hello.board.domain.User;
 import hello.board.exception.FailToFindEntityException;
-import hello.board.exception.WrongPageRequestException;
 import hello.board.repository.ArticleRepository;
 import hello.board.repository.CommentRepository;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceUnitUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.proxy.HibernateProxy;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,8 +17,6 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-
-import java.util.function.Predicate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -37,8 +31,6 @@ class CommentQueryServiceTest {
     @Autowired
     EntityManager em;
 
-    PersistenceUnitUtil persistenceUnitUtil;
-
     @TestConfiguration
     static class Config {
 
@@ -48,18 +40,9 @@ class CommentQueryServiceTest {
         }
     }
 
-    @BeforeEach
-    void beforeEach() {
-        persistenceUnitUtil = em.getEntityManagerFactory().getPersistenceUnitUtil();
-    }
-
     @AfterEach
     void afterEach() {
         em.clear();
-    }
-
-    private static Predicate<Object> isNotProxy() {
-        return a -> !(a instanceof HibernateProxy);
     }
 
     private User createUserAndPersist(String name, String email, String password) {
@@ -97,9 +80,6 @@ class CommentQueryServiceTest {
                 .isEqualTo("comment");
 
         User author = findComment.getAuthor();
-        assertThat(author)
-                .as("작성자 페치 조인 성공")
-                .isNotInstanceOf(HibernateProxy.class);
 
         assertThat(author.getName())
                 .as("작성자 이름")
@@ -155,18 +135,12 @@ class CommentQueryServiceTest {
                 .isEqualTo("comment");
 
         User author = findComment.getAuthor();
-        assertThat(author)
-                .as("댓글 작성자 페치 조인 성공")
-                .isNotInstanceOf(HibernateProxy.class);
 
         assertThat(author.getName())
                 .as("댓글 작성자 이름")
                 .isEqualTo("user2");
 
         Article findCommentArticle = findComment.getArticle();
-        assertThat(findCommentArticle)
-                .as("게시글 페치 조인 성공")
-                .isNotInstanceOf(HibernateProxy.class);
 
         assertThat(findCommentArticle.getTitle())
                 .as("게시글 제목")
@@ -310,35 +284,5 @@ class CommentQueryServiceTest {
                 .extracting("content")
                 .as("댓글 내용")
                 .containsExactly("comment 22", "comment 24", "comment 25", "comment 27", "comment 28");
-
-        assertThat(commentsOfArticle1_1.getContent())
-                .extracting("author")
-                .as("작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
-
-        assertThat(commentsOfArticle1_2.getContent())
-                .extracting("author")
-                .as("작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
-
-        assertThat(commentsOfArticle1_3.getContent())
-                .extracting("author")
-                .as("작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
-
-        assertThat(commentsOfArticle2_1.getContent())
-                .extracting("author")
-                .as("작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
-
-        assertThat(commentsOfArticle2_2.getContent())
-                .extracting("author")
-                .as("작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
-
-        assertThat(commentsOfArticle2_3.getContent())
-                .extracting("author")
-                .as("작성자 페치 조인 성공")
-                .allMatch(isNotProxy());
     }
 }

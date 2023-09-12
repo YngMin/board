@@ -52,11 +52,24 @@ public class Comment extends BaseEntity {
         article.deleteComment(this);
     }
 
-    public boolean isIdOfMyArticle(Long articleId) {
-        return Objects.equals(article.getId(), articleId);
+    public boolean isNotMyArticle(Long articleId) {
+        return !Objects.equals(article.getId(), articleId);
     }
 
     public boolean isIdOfAuthor(Long userId) {
         return Objects.equals(author.getId(), userId);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Comment comment)) return false;
+        return Objects.equals(getId(), comment.getId())
+                && Objects.equals(getContent(), comment.getContent());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId(), getContent());
     }
 }

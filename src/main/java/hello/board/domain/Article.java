@@ -1,10 +1,7 @@
 package hello.board.domain;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -73,5 +70,19 @@ public class Article extends BaseEntity {
 
     public boolean isIdOfAuthor(Long userId) {
         return Objects.equals(author.getId(), userId);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Article article)) return false;
+        return Objects.equals(getId(), article.getId())
+                && Objects.equals(getTitle(), article.getTitle())
+                && Objects.equals(getContent(), article.getContent());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId(), getTitle(), getContent());
     }
 }

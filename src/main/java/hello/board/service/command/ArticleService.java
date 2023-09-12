@@ -6,6 +6,7 @@ import hello.board.domain.User;
 import hello.board.dto.service.ArticleCommentFlatDto;
 import hello.board.exception.FailToFindEntityException;
 import hello.board.exception.NoAuthorityException;
+import hello.board.exception.WrongPageRequestException;
 import hello.board.repository.ArticleRepository;
 import hello.board.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -88,10 +89,14 @@ public class ArticleService {
     }
 
     private static Article extractArticleFrom(Page<ArticleCommentFlatDto> result) {
+        if (result.getTotalElements() == 0) {
+            throw new FailToFindEntityException("Article");
+        }
+
         return result.getContent().stream()
                 .map(ArticleCommentFlatDto::getArticle)
                 .findAny()
-                .orElseThrow(() -> FailToFindEntityException.of("Article"));
+                .orElseThrow(() -> WrongPageRequestException.of(result.getNumber(), result.getSize()));
     }
 
     private static Page<Comment> extractCommentsFrom(Page<ArticleCommentFlatDto> result) {
