@@ -135,17 +135,18 @@ public class ArticleSearchRepositoryImpl implements ArticleSearchRepository {
 
     private BooleanExpression containsKeyword(ArticleSearchCond cond) {
 
-        String keyword = cond.getKeyword();
+        String keyword = cond.getKeyword().trim();
 
         if (!StringUtils.hasText(keyword)) {
             return null;
         }
 
         return switch (cond.getType()) {
-            case TITLE -> article.title.contains(keyword);
-            case CONTENT -> article.content.contains(keyword);
-            case TITLE_AND_CONTENT -> article.title.contains(keyword).or(article.content.contains(keyword));
-            case AUTHOR -> article.author.name.contains(keyword);
+            case TITLE -> article.title.containsIgnoreCase(keyword);
+            case CONTENT -> article.content.containsIgnoreCase(keyword);
+            case TITLE_AND_CONTENT -> article.title.containsIgnoreCase(keyword)
+                    .or(article.content.containsIgnoreCase(keyword));
+            case AUTHOR -> article.author.name.containsIgnoreCase(keyword);
         };
     }
 
