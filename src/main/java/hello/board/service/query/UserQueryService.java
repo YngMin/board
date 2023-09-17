@@ -7,8 +7,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
-
 
 @Service
 @Transactional(readOnly = true)
@@ -25,10 +23,6 @@ public class UserQueryService {
     public User findByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> FailToFindEntityException.of("User"));
-    }
-
-    public Optional<User> findUser(String email) {
-        return userRepository.findByEmail(email);
     }
 
     public boolean existsByEmail(String email) {

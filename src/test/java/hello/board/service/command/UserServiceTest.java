@@ -5,11 +5,7 @@ import hello.board.dto.service.UserServiceDto.Save;
 import hello.board.dto.service.UserServiceDto.Update;
 import hello.board.exception.FailToFindEntityException;
 import hello.board.repository.UserRepository;
-import hello.board.service.query.UserQueryService;
-import jakarta.persistence.EntityManager;
-import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,15 +19,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@Slf4j
 @DataJpaTest
 class UserServiceTest {
 
     @Autowired
     UserService userService;
-
+    
     @Autowired
-    EntityManager em;
+    UserRepository userRepository;
 
     @Autowired
     PasswordEncoder passwordEncoder;
@@ -43,37 +38,24 @@ class UserServiceTest {
         UserService userService(UserRepository userRepository) {
             return new UserService(userRepository, passwordEncoder());
         }
-
-        @Bean
-        UserQueryService userQueryService(UserRepository userRepository) {
-            return new UserQueryService(userRepository);
-        }
-
+        
         @Bean
         PasswordEncoder passwordEncoder() {
             return new BCryptPasswordEncoder();
         }
     }
 
-    @AfterEach
-    void afterEach() {
-        em.clear();
-    }
-
     @Test
     @DisplayName("사용자 저장 성공")
     void save() {
         //given
-        Save param = Save.create("user", "test@gmail.com", "1234");
+        Save param = Save.create("user", "user@board.com", "password");
 
         //when
         Long id = userService.save(param);
 
-        em.flush();
-        em.clear();
-
         //then
-        User findUser = em.find(User.class, id);
+        User findUser = userRepository.findById(id).orElseThrow();
 
         assertThat(findUser.getName())
                 .as("사용자 이름")
@@ -81,9 +63,9 @@ class UserServiceTest {
 
         assertThat(findUser.getEmail())
                 .as("사용자 이름")
-                .isEqualTo("test@gmail.com");
+                .isEqualTo("user@board.com");
 
-        assertThat(passwordEncoder.matches("1234", findUser.getPassword()))
+        assertThat(passwordEncoder.matches("password", findUser.getPassword()))
                 .as("사용자 패스워드")
                 .isTrue();
 
@@ -93,110 +75,157 @@ class UserServiceTest {
     @DisplayName("사용자 저장 실패")
     void save_fail() {
         //given
-        Save param1 = Save.create("user1", "test@gmail.com", "1234");
-        Save param2 = Save.create("user2", "test@gmail.com", "1234");
+        User user = User.create("user1", "user@board.com", passwordEncoder.encode("password1"));
+        userRepository.save(user);
 
-        userService.save(param1);
+        Save param = Save.create("user2", "user@board.com", "password2");
 
         //when & then
-        Assertions.assertThatThrownBy(() -> userService.save(param2))
+        Assertions.assertThatThrownBy(() -> userService.save(param))
                 .as("이미 존재하는 이메일")
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
-    @DisplayName("사용자 정보 수정 성공")
-    void update() {
+    @DisplayName("사용자 정보 수정 성공 - 이름과 패스워드")
+    void update_both() {
         //given
-        User user = User.create("user", "test@gmail.com", passwordEncoder.encode("1234"));
-        em.persist(user);
+        User user = User.create("user", "user@board.com", passwordEncoder.encode("password"));
+        userRepository.save(user);
 
         final Long id = user.getId();
 
-        em.flush();
-        em.clear();
+        //when
+        Update param = Update.create("newName", "newPassword");
+        userService.update(id, param);
 
-        //when 1
-        Update param1 = Update.create("newUser", "newPassword");
-        userService.update(id, param1);
+        //then
+        User findUser = userRepository.findById(id).orElseThrow();
 
-        em.flush();
-        em.clear();
-
-        //then 1
-        User findUser1 = em.find(User.class, id);
-
-        assertThat(findUser1.getName())
+        assertThat(findUser.getName())
                 .as("수정된 이름")
-                .isEqualTo("newUser");
+                .isEqualTo("newName");
 
-        assertThat(findUser1.getEmail())
+        assertThat(findUser.getEmail())
                 .as("수정되지 않은 이메일")
-                .isEqualTo("test@gmail.com");
+                .isEqualTo("user@board.com");
 
-        assertThat(passwordEncoder.matches("newPassword", findUser1.getPassword()))
+        assertThat(passwordEncoder.matches("newPassword", findUser.getPassword()))
                 .as("수정된 패스워드")
                 .isTrue();
+    }
 
-        //when 2
-        Update param2 = Update.create("newUser2", null);
-        userService.update(id, param2);
+    @Test
+    @DisplayName("사용자 정보 수정 성공 - 이름")
+    void update_name() {
+        //given
+        User user = User.create("user", "user@board.com", passwordEncoder.encode("password"));
+        userRepository.save(user);
 
-        em.flush();
-        em.clear();
+        final Long id = user.getId();
 
-        //then 2
-        User findUser2 = em.find(User.class, id);
-        assertThat(findUser2.getName())
+        //when
+        Update param = Update.create("newName", null);
+        userService.update(id, param);
+
+        //then
+        User findUser = userRepository.findById(id).orElseThrow();
+
+        assertThat(findUser.getName())
                 .as("수정된 이름")
-                .isEqualTo("newUser2");
+                .isEqualTo("newName");
 
-        assertThat(findUser2.getEmail())
+        assertThat(findUser.getEmail())
                 .as("수정되지 않은 이메일")
-                .isEqualTo("test@gmail.com");
+                .isEqualTo("user@board.com");
 
-        assertThat(passwordEncoder.matches("newPassword", findUser2.getPassword()))
+        assertThat(passwordEncoder.matches("password", findUser.getPassword()))
                 .as("수정되지 않은 패스워드")
                 .isTrue();
+    }
 
-        //when 3
-        Update param3 = Update.create(null, "newPassword2");
-        userService.update(id, param3);
+    @Test
+    @DisplayName("사용자 정보 수정 성공 - 패스워드")
+    void update_password() {
+        //given
+        User user = User.create("user", "user@board.com", passwordEncoder.encode("password"));
+        userRepository.save(user);
 
-        em.flush();
-        em.clear();
+        final Long id = user.getId();
 
-        //then 3
-        User findUser3 = em.find(User.class, id);
-        assertThat(findUser3.getName())
+        //when
+        Update param = Update.create(null, "newPassword");
+        userService.update(id, param);
+
+        //then
+        User findUser = userRepository.findById(id).orElseThrow();
+
+        assertThat(findUser.getName())
                 .as("수정되지 않은 이름")
-                .isEqualTo("newUser2");
+                .isEqualTo("user");
 
-        assertThat(findUser3.getEmail())
+        assertThat(findUser.getEmail())
                 .as("수정되지 않은 이메일")
-                .isEqualTo("test@gmail.com");
+                .isEqualTo("user@board.com");
 
-        assertThat(passwordEncoder.matches("newPassword2", findUser3.getPassword()))
+        assertThat(passwordEncoder.matches("newPassword", findUser.getPassword()))
                 .as("수정된 패스워드")
                 .isTrue();
+    }
 
-        //when 4
+    @Test
+    @DisplayName("사용자 정보 수정 성공 - 빈 UpdateDto")
+    void update_empty() {
+        //given
+        User user = User.create("user", "user@board.com", passwordEncoder.encode("password"));
+        userRepository.save(user);
+
+        final Long id = user.getId();
+
+        //when
+        Update param = Update.create(null, null);
+        userService.update(id, param);
+
+        //then
+        User findUser = userRepository.findById(id).orElseThrow();
+
+        assertThat(findUser.getName())
+                .as("수정되지 않은 이름")
+                .isEqualTo("user");
+
+        assertThat(findUser.getEmail())
+                .as("수정되지 않은 이메일")
+                .isEqualTo("user@board.com");
+
+        assertThat(passwordEncoder.matches("password", findUser.getPassword()))
+                .as("수정되지 않은 패스워드")
+                .isTrue();
+    }
+
+    @Test
+    @DisplayName("사용자 정보 수정 성공 - null")
+    void update_null() {
+        //given
+        User user = User.create("user", "user@board.com", passwordEncoder.encode("password"));
+        userRepository.save(user);
+
+        final Long id = user.getId();
+
+        //when
         userService.update(id, null);
 
-        em.flush();
-        em.clear();
+        //then
+        User findUser = userRepository.findById(id).orElseThrow();
 
-        //then 4
-        User findUser4 = em.find(User.class, id);
-        assertThat(findUser4.getName())
+        assertThat(findUser.getName())
                 .as("수정되지 않은 이름")
-                .isEqualTo("newUser2");
+                .isEqualTo("user");
 
-        assertThat(findUser4.getEmail())
+        assertThat(findUser.getEmail())
                 .as("수정되지 않은 이메일")
-                .isEqualTo("test@gmail.com");
+                .isEqualTo("user@board.com");
 
-        assertThat(passwordEncoder.matches("newPassword2", findUser4.getPassword()))
+        assertThat(passwordEncoder.matches("password", findUser.getPassword()))
                 .as("수정되지 않은 패스워드")
                 .isTrue();
     }
@@ -205,16 +234,13 @@ class UserServiceTest {
     @DisplayName("사용자 정보 수정 실패")
     void update_fail() {
         //given
-        User user = User.create("user", "test@gmail.com", passwordEncoder.encode("1234"));
-        em.persist(user);
+        User user = User.create("user", "user@board.com", passwordEncoder.encode("password"));
+        userRepository.save(user);
 
         final Long WRONG_ID = 4444L;
 
-        em.flush();
-        em.clear();
-
         //when & then
-        Update param = Update.create("newUser", "newPassword");
+        Update param = Update.create("newName", "newPassword");
         assertThatThrownBy(() -> userService.update(WRONG_ID, param))
                 .as("존재하지 않는 사용자 ID")
                 .isInstanceOf(FailToFindEntityException.class);

@@ -3,9 +3,6 @@ package hello.board.service.query;
 import hello.board.domain.User;
 import hello.board.exception.FailToFindEntityException;
 import hello.board.repository.UserRepository;
-import jakarta.persistence.EntityManager;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,18 +15,18 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@Slf4j
 @DataJpaTest
 class UserQueryServiceTest {
 
     @Autowired
     UserQueryService userQueryService;
-
+    
     @Autowired
-    EntityManager em;
-
+    UserRepository userRepository;
+    
     @Autowired
     PasswordEncoder passwordEncoder;
+    
 
     @TestConfiguration
     static class Config {
@@ -45,49 +42,30 @@ class UserQueryServiceTest {
         }
     }
 
-    @AfterEach
-    void afterEach() {
-        em.clear();
-    }
-
     @Test
     @DisplayName("findById 성공")
     void findById() {
         //given
-        User user = User.create("user", "test@gmail.com", passwordEncoder.encode("1234"));
-        em.persist(user);
-        final Long id = user.getId();
+        User user = User.create("user", "user@board.com", passwordEncoder.encode("password"));
+        userRepository.save(user);
 
-        em.flush();
-        em.clear();
+        final Long id = user.getId();
 
         //when
         User findUser = userQueryService.findById(id);
 
         // then
-        assertThat(findUser.getName())
-                .as("사용자 이름")
-                .isEqualTo("user");
-
-        assertThat(findUser.getEmail())
-                .as("사용자 이메일")
-                .isEqualTo("test@gmail.com");
-
-        assertThat(passwordEncoder.matches("1234", findUser.getPassword()))
-                .as("사용자 비밀번호")
-                .isTrue();
-
+        assertThat(findUser)
+                .as("사용자")
+                .isEqualTo(user);
     }
 
     @Test
     @DisplayName("findById 실패")
     void findById_fail() {
         //given
-        User user = User.create("user", "test@gmail.com", passwordEncoder.encode("1234"));
-        em.persist(user);
-
-        em.flush();
-        em.clear();
+        User user = User.create("user", "user@board.com", passwordEncoder.encode("password"));
+        userRepository.save(user);
 
         final Long WRONG_ID = 4444L;
 
@@ -101,36 +79,26 @@ class UserQueryServiceTest {
     @DisplayName("이메일로 조회 성공")
     void findByEmail() {
         //given
-        User user = User.create("user", "test@gmail.com", passwordEncoder.encode("1234"));
-        em.persist(user);
-
-        em.flush();
-        em.clear();
+        User user = User.create("user", "user@board.com", passwordEncoder.encode("password"));
+        userRepository.save(user);
 
         //when
-        User findUser = userQueryService.findByEmail("test@gmail.com");
+        User findUser = userQueryService.findByEmail("user@board.com");
 
         // then
-        assertThat(findUser.getName())
-                .as("사용자 이름")
-                .isEqualTo("user");
-
-        assertThat(passwordEncoder.matches("1234", findUser.getPassword()))
-                .as("사용자 비밀번호")
-                .isTrue();
+        assertThat(findUser)
+                .as("사용자")
+                .isEqualTo(user);
     }
 
     @Test
     @DisplayName("이메일로 조회 실패")
     void findByEmail_fail() {
         //given
-        User user = User.create("user", "test@gmail.com", passwordEncoder.encode("1234"));
-        em.persist(user);
+        User user = User.create("user", "user@board.com", passwordEncoder.encode("password"));
+        userRepository.save(user);
 
-        em.flush();
-        em.clear();
-
-        final String WRONG_EMAIL = "none";
+        final String WRONG_EMAIL = "WRONG_EMAIL";
 
         //when & then
         assertThatThrownBy(() -> userQueryService.findByEmail(WRONG_EMAIL))
@@ -139,25 +107,33 @@ class UserQueryServiceTest {
     }
 
     @Test
-    @DisplayName("이메일로 존재 여부 확인")
-    void existsByEmail() {
+    @DisplayName("이메일로 존재 여부 확인 - 존재하는 경우")
+    void existsByEmail_exists() {
         //given
-        User user = User.create("user", "test@gmail.com", passwordEncoder.encode("1234"));
-        em.persist(user);
-
-        em.flush();
-        em.clear();
+        User user = User.create("user", "user@board.com", passwordEncoder.encode("password"));
+        userRepository.save(user);
 
         //when
-        boolean exists1 = userQueryService.existsByEmail("test@gmail.com");
-        boolean exists2 = userQueryService.existsByEmail("none");
+        boolean exists = userQueryService.existsByEmail("user@board.com");
 
         // then
-        assertThat(exists1)
+        assertThat(exists)
                 .as("존재하는 이메일")
                 .isTrue();
+    }
 
-        assertThat(exists2)
+    @Test
+    @DisplayName("이메일로 존재 여부 확인 - 존재하지 않는 경우")
+    void existsByEmail_doNotExist() {
+        //given
+        User user = User.create("user", "user@board.com", passwordEncoder.encode("password"));
+        userRepository.save(user);
+
+        //when
+        boolean exists = userQueryService.existsByEmail("WRONG_EMAIL");
+
+        // then
+        assertThat(exists)
                 .as("존재하지 않는 이메일")
                 .isFalse();
     }
