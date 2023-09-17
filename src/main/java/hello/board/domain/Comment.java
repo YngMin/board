@@ -34,12 +34,12 @@ public class Comment extends BaseEntity {
         this.content = content;
         this.article = article;
         this.author = author;
-
-        article.addComment(this);
     }
 
     public static Comment create(String content, Article article, User author) {
-        return new Comment(content, article, author);
+        Comment comment = new Comment(content, article, author);
+        article.addComment(comment);
+        return comment;
     }
 
     public void modifyContent(String content) {
@@ -50,6 +50,7 @@ public class Comment extends BaseEntity {
 
     public void deleteFromArticle() {
         article.deleteComment(this);
+        article = null;
     }
 
     public boolean isNotMyArticle(Long articleId) {

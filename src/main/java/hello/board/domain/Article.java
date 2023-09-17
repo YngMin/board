@@ -12,6 +12,7 @@ import java.util.Objects;
 @ToString(of = {"id", "title", "content", "view"})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Article extends BaseEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "article_id", updatable = false)
@@ -55,11 +56,11 @@ public class Article extends BaseEntity {
         }
     }
 
-    public void addComment(Comment comment) {
+    void addComment(Comment comment) {
         comments.add(comment);
     }
 
-    public void deleteComment(Comment comment) {
+    void deleteComment(Comment comment) {
         comments.remove(comment);
     }
 
