@@ -6,9 +6,7 @@ import hello.board.domain.User;
 import hello.board.exception.FailToFindEntityException;
 import hello.board.repository.ArticleRepository;
 import hello.board.repository.CommentRepository;
-import jakarta.persistence.EntityManager;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.AfterEach;
+import hello.board.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,18 +16,26 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@Slf4j
 @DataJpaTest
 class CommentQueryServiceTest {
 
     @Autowired
     CommentQueryService commentQueryService;
-
+    
     @Autowired
-    EntityManager em;
+    UserRepository userRepository;
+    
+    @Autowired
+    ArticleRepository articleRepository;
+    
+    @Autowired
+    CommentRepository commentRepository;
 
     @TestConfiguration
     static class Config {
@@ -39,67 +45,85 @@ class CommentQueryServiceTest {
             return new CommentQueryService(articleRepository, commentRepository);
         }
     }
-
-    @AfterEach
-    void afterEach() {
-        em.clear();
-    }
-
-    private User createUserAndPersist(String name, String email, String password) {
+    
+    private User createAndSaveUser(String name, String email, String password) {
         User user = User.create(name, email, password);
-        em.persist(user);
+        userRepository.save(user);
         return user;
     }
 
-    private Article createArticleAndPersist(String title, String content, User user) {
+    private Article createAndSaveArticle(String title, String content, User user) {
         Article article = Article.create(title, content, user);
-        em.persist(article);
+        articleRepository.save(article);
         return article;
+    }
+
+    private static List<Article> generateArticles(int numOfArticles, User... authors) {
+        List<Article> articles = new ArrayList<>();
+        for (int i = 0; i < numOfArticles; i++) {
+            Article article = Article.create(
+                    "title" + i,
+                    "content" + i,
+                    authors[i % authors.length]
+            );
+            articles.add(article);
+        }
+        return articles;
+    }
+    private static List<Comment> generateComments(List<Article> articles, List<User> authors, int... numOfCommentsSeq) {
+        List<Comment> comments = new ArrayList<>();
+        int cnt = 0, idx = 0;
+        int authorIdx = 0;
+        for (Article article : articles) {
+            for (int i = 0; i < numOfCommentsSeq[idx]; i++) {
+                Comment comment = Comment.create(
+                        "content" + cnt++,
+                        article,
+                        authors.get(authorIdx)
+                );
+                comments.add(comment);
+                authorIdx = (authorIdx+1) % authors.size();
+            }
+            idx = (idx+1) % numOfCommentsSeq.length;
+        }
+        return comments;
     }
 
     @Test
     @DisplayName("findById 성공")
     void findById() {
         //given
-        User user = createUserAndPersist("user", "test@gmail.com", "1234");
-        Article article = createArticleAndPersist("title", "content", user);
+        User author = createAndSaveUser("author", "author@board.com", "");
+        Article article = createAndSaveArticle("title", "content", author);
 
-        Comment comment = Comment.create("comment", article, user);
-        em.persist(comment);
+        Comment comment = Comment.create("comment", article, author);
+        commentRepository.save(comment);
         final Long id = comment.getId();
-
-        em.flush();
-        em.clear();
 
         //when
         Comment findComment = commentQueryService.findById(id);
 
         //then
-        assertThat(findComment.getContent())
-                .as("댓글 내용")
-                .isEqualTo("comment");
+        assertThat(findComment)
+                .as("댓글")
+                .isEqualTo(comment);
 
-        User author = findComment.getAuthor();
-
-        assertThat(author.getName())
-                .as("작성자 이름")
-                .isEqualTo("user");
+        assertThat(findComment.getAuthor())
+                .as("작성자")
+                .isEqualTo(author);
     }
 
     @Test
     @DisplayName("findById 실패")
     void findById_fail() {
         //given
-        User user = createUserAndPersist("user", "test@gmail.com", "1234");
-        Article article = createArticleAndPersist("title", "content", user);
+        User author = createAndSaveUser("author", "author@board.com", "");
+        Article article = createAndSaveArticle("title", "content", author);
 
-        Comment comment = Comment.create("comment", article, user);
-        em.persist(comment);
+        Comment comment = Comment.create("comment", article, author);
+        commentRepository.save(comment);
 
         final Long WRONG_ID = 4444L;
-
-        em.flush();
-        em.clear();
 
         //when & then
         assertThatThrownBy(() -> commentQueryService.findById(WRONG_ID))
@@ -111,178 +135,337 @@ class CommentQueryServiceTest {
     @DisplayName("게시글과 함께 조회 성공")
     void findWithArticle() {
         //given
-        User user1 = createUserAndPersist("user1", "test1@gmail.com", "12341");
-        User user2 = createUserAndPersist("user2", "test2@gmail.com", "12342");
+        User author1 = createAndSaveUser("author1", "author1@board.com", "");
+        User author2 = createAndSaveUser("author2", "author2@board.com", "");
 
-        Article article = createArticleAndPersist("title", "content", user1);
-
+        Article article = createAndSaveArticle("title", "content", author1);
         final Long articleId = article.getId();
 
-        Comment comment = Comment.create("comment", article, user2);
-        em.persist(comment);
-
+        Comment comment = Comment.create("comment", article, author2);
+        commentRepository.save(comment);
         final Long id = comment.getId();
-
-        em.flush();
-        em.clear();
 
         //when
         Comment findComment = commentQueryService.findWithArticle(id, articleId);
 
         //then
-        assertThat(findComment.getContent())
-                .as("댓글 내용")
-                .isEqualTo("comment");
+        assertThat(findComment)
+                .as("댓글")
+                .isEqualTo(comment);
 
-        User author = findComment.getAuthor();
+        assertThat(findComment.getAuthor())
+                .as("댓글 작성자")
+                .isEqualTo(author2);
 
-        assertThat(author.getName())
-                .as("댓글 작성자 이름")
-                .isEqualTo("user2");
+        assertThat(findComment.getArticle())
+                .as("게시글")
+                .isEqualTo(article);
+    }
 
-        Article findCommentArticle = findComment.getArticle();
+    @Test
+    @DisplayName("게시글과 함께 조회 실패 - 존재하지 않는 댓글 ID로 조회 시도")
+    void findWithArticle_fail_wrongCommentId() {
+        //given
+        User author1 = createAndSaveUser("author1", "author1@board.com", "");
+        User author2 = createAndSaveUser("author2", "author2@board.com", "");
 
-        assertThat(findCommentArticle.getTitle())
-                .as("게시글 제목")
-                .isEqualTo("title");
+        Article article = createAndSaveArticle("title", "content", author1);
+        final Long articleId = article.getId();
 
+        Comment comment = Comment.create("comment", article, author2);
+        commentRepository.save(comment);
+
+        final Long WRONG_ID = 4444L;
+
+        //when & then
+        assertThatThrownBy(() -> commentQueryService.findWithArticle(WRONG_ID, articleId))
+                .as("존재하지 않는 댓글 ID")
+                .isInstanceOf(FailToFindEntityException.class);
+    }
+
+    @Test
+    @DisplayName("게시글과 함께 조회 실패 - 다른 게시글 ID로 조회 시도")
+    void findWithArticle_fail_otherArticleId() {
+        //given
+        User author1 = createAndSaveUser("author1", "author1@board.com", "");
+        User author2 = createAndSaveUser("author2", "author2@board.com", "");
+
+        Article article = createAndSaveArticle("title", "content", author1);
+        Article other = createAndSaveArticle("other", "ohter", author2);
+
+        final Long otherId = other.getId();
+
+        Comment comment = Comment.create("comment", article, author2);
+        commentRepository.save(comment);
+
+        final Long id = comment.getId();
+
+        //when & then
+        assertThatThrownBy(() -> commentQueryService.findWithArticle(id, otherId))
+                .as("다른 게시글 ID")
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("게시글과 함께 조회 실패 - 존재하지 않는 게시글 ID로 조회 시도")
+    void findWithArticle_fail_wrongArticleId() {
+        //given
+        User author1 = createAndSaveUser("author1", "author1@board.com", "");
+        User author2 = createAndSaveUser("author2", "author2@board.com", "");
+
+        Article article = createAndSaveArticle("title", "content", author1);
+
+        Comment comment = Comment.create("comment", article, author2);
+        commentRepository.save(comment);
+
+        final Long id = comment.getId();
+
+        final Long WRONG_ARTICLE_ID = 4444L;
+
+        //when & then
+        assertThatThrownBy(() -> commentQueryService.findWithArticle(id, WRONG_ARTICLE_ID))
+                .as("존재하지 않는 게시글 ID")
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     @DisplayName("게시글과 함께 조회 실패")
     void findWithArticle_fail() {
         //given
-        User user1 = createUserAndPersist("user1", "test1@gmail.com", "12341");
-        User user2 = createUserAndPersist("user2", "test2@gmail.com", "12342");
+        User author1 = createAndSaveUser("author1", "author1@board.com", "");
+        User author2 = createAndSaveUser("author2", "author2@board.com", "");
 
-        Article article1 = createArticleAndPersist("title1", "content1", user1);
-        Article article2 = createArticleAndPersist("title2", "content2", user2);
+        Article article = createAndSaveArticle("title", "content", author1);
+        Article other = createAndSaveArticle("other", "other", author2);
 
-        final Long article1Id = article1.getId();
-        final Long article2Id = article2.getId();
+        final Long otherId = other.getId();
 
-        Comment comment = Comment.create("comment", article1, user2);
-        em.persist(comment);
-
-        final Long id = comment.getId();
+        Comment comment = Comment.create("comment", article, author2);
+        commentRepository.save(comment);
 
         final Long WRONG_ID = 4444L;
 
-        em.flush();
-        em.clear();
-
         //when & then
-        assertThatThrownBy(() -> commentQueryService.findWithArticle(WRONG_ID, article1Id))
-                .as("존재하지 않는 댓글 ID")
-                .isInstanceOf(FailToFindEntityException.class);
-
-        assertThatThrownBy(() -> commentQueryService.findWithArticle(id, article2Id))
-                .as("다른 게시글 ID")
-                .isInstanceOf(IllegalArgumentException.class);
-
-        assertThatThrownBy(() -> commentQueryService.findWithArticle(id, WRONG_ID))
-                .as("존재하지 않는 게시글 ID")
-                .isInstanceOf(IllegalArgumentException.class);
-
-        assertThatThrownBy(() -> commentQueryService.findWithArticle(WRONG_ID, article2Id))
+        assertThatThrownBy(() -> commentQueryService.findWithArticle(WRONG_ID, otherId))
                 .as("존재하지 않는 댓글 ID & 다른 게시글 ID")
                 .isInstanceOf(FailToFindEntityException.class);
     }
 
     @Test
-    @DisplayName("게시글 ID로 조회 성공")
-    void findByArticleId() {
+    @DisplayName("게시글 ID로 조회 성공 - 댓글 없음")
+    void findByArticleId_NoComment() {
         //given
-        User user1 = createUserAndPersist("user1", "test1@gmail.com", "12341");
-        User user2 = createUserAndPersist("user2", "test2@gmail.com", "12342");
+        User author1 = createAndSaveUser("author1", "author1@board.com", "");
+        User author2 = createAndSaveUser("author2", "author2@board.com", "");
+        User author3 = createAndSaveUser("author3", "author3@board.com", "");
 
-        Article article1 = createArticleAndPersist("title1", "content1", user1);
-        Article article2 = createArticleAndPersist("title2", "content2", user2);
+        List<Article> articles = generateArticles(25, author1, author2, author3);
+        articleRepository.saveAll(articles);
 
-        Long article1Id = article1.getId();
-        Long article2Id = article2.getId();
+        List<Comment> comments = generateComments(
+                articles,
+                List.of(author1, author2, author3),
+                4, 3, 2, 1, 0
+        );
+        commentRepository.saveAll(comments);
 
+        final Long articleId = articles.get(4).getId();
 
-        final int NUMBER_OF_COMMENTS = 100;
-
-        for (int i = 0; i < NUMBER_OF_COMMENTS; i++) {
-            Comment comment = Comment.create("comment " + i, (i % 3 == 2) ? article1 : article2 , (i % 2 == 1) ? user1 : user2);
-            em.persist(comment);
-        }
-
-        final int PAGE_1 = 0, SIZE_1 = 10;
-        final int PAGE_2 = 2, SIZE_2 = 13;
-        final int PAGE_3 = 3, SIZE_3 = 5;
-
-        final PageRequest pageable1 = PageRequest.of(PAGE_1, SIZE_1);
-        final PageRequest pageable2 = PageRequest.of(PAGE_2, SIZE_2);
-        final PageRequest pageable3 = PageRequest.of(PAGE_3, SIZE_3);
-
-        em.flush();
-        em.clear();
+        final PageRequest pageable = PageRequest.of(0, 5);
 
         //when
-        Page<Comment> commentsOfArticle1_1 = commentQueryService.findByArticleId(article1Id, pageable1);
-        Page<Comment> commentsOfArticle1_2 = commentQueryService.findByArticleId(article1Id, pageable2);
-        Page<Comment> commentsOfArticle1_3 = commentQueryService.findByArticleId(article1Id, pageable3);
-
-        Page<Comment> commentsOfArticle2_1 = commentQueryService.findByArticleId(article2Id, pageable1);
-        Page<Comment> commentsOfArticle2_2 = commentQueryService.findByArticleId(article2Id, pageable2);
-        Page<Comment> commentsOfArticle2_3 = commentQueryService.findByArticleId(article2Id, pageable3);
+        Page<Comment> findComments = commentQueryService.findByArticleId(articleId, pageable);
 
         //then
-        assertThat(commentsOfArticle1_1.getTotalElements())
+        assertThat(findComments.getTotalElements())
                 .as("총 댓글 수")
-                .isEqualTo(33L);
+                .isEqualTo(0L);
 
-        assertThat(commentsOfArticle1_2.getTotalElements())
+        assertThat(findComments.getContent().isEmpty())
+                .as("댓글 없음")
+                .isTrue();
+    }
+
+    @Test
+    @DisplayName("게시글 ID로 조회 성공 - 첫 페이지")
+    void findByArticleId_firstPage() {
+        //given
+        User author1 = createAndSaveUser("author1", "author1@board.com", "");
+        User author2 = createAndSaveUser("author2", "author2@board.com", "");
+        User author3 = createAndSaveUser("author3", "author3@board.com", "");
+
+        List<Article> articles = generateArticles(20, author1, author2, author3);
+        articleRepository.saveAll(articles);
+
+        List<Comment> comments = generateComments(
+                articles,
+                List.of(author1, author2, author3),
+                9, 4, 3, 0, 6, 2
+        );
+        commentRepository.saveAll(comments);
+
+        final Long articleId = articles.get(0).getId();
+
+        final PageRequest pageable = PageRequest.of(0, 5);
+
+        //when
+        Page<Comment> findComments = commentQueryService.findByArticleId(articleId, pageable);
+
+        //then
+        assertThat(findComments.getTotalElements())
                 .as("총 댓글 수")
-                .isEqualTo(33L);
+                .isEqualTo(9L);
 
-        assertThat(commentsOfArticle1_3.getTotalElements())
+        assertThat(findComments.getContent())
+                 .as("댓글")
+                .containsExactlyElementsOf(comments.subList(0, 5));
+
+        assertThat(findComments.getContent())
+                .extracting("author")
+                .as("댓글 작성자")
+                .containsExactly(author1, author2, author3, author1, author2);
+    }
+
+    @Test
+    @DisplayName("게시글 ID로 조회 성공 - 중간 페이지")
+    void findByArticleId_middlePage() {
+        //given
+        User author1 = createAndSaveUser("author1", "author1@board.com", "");
+        User author2 = createAndSaveUser("author2", "author2@board.com", "");
+        User author3 = createAndSaveUser("author3", "author3@board.com", "");
+
+        List<Article> articles = generateArticles(20, author1, author2, author3);
+        articleRepository.saveAll(articles);
+
+        List<Comment> comments = generateComments(
+                articles,
+                List.of(author1, author2, author3),
+                12, 4, 11, 0, 3, 2, 6
+        );
+        commentRepository.saveAll(comments);
+
+        final Long articleId = articles.get(2).getId();
+
+        final PageRequest pageable = PageRequest.of(1, 5);
+
+        //when
+        Page<Comment> findComments = commentQueryService.findByArticleId(articleId, pageable);
+
+        //then
+        assertThat(findComments.getTotalElements())
                 .as("총 댓글 수")
-                .isEqualTo(33L);
+                .isEqualTo(11L);
 
-        assertThat(commentsOfArticle2_1.getTotalElements())
+        assertThat(findComments.getContent())
+                .as("댓글")
+                .containsExactlyElementsOf(comments.subList(21, 26));
+
+        assertThat(findComments.getContent())
+                .extracting("author")
+                .as("댓글 작성자")
+                .containsExactly(author1, author2, author3, author1, author2);
+    }
+
+    @Test
+    @DisplayName("게시글 ID로 조회 성공 - 마지막 페이지")
+    void findByArticleId_endPage() {
+        //given
+        User author1 = createAndSaveUser("author1", "author1@board.com", "");
+        User author2 = createAndSaveUser("author2", "author2@board.com", "");
+        User author3 = createAndSaveUser("author3", "author3@board.com", "");
+
+        List<Article> articles = generateArticles(20, author1, author2, author3);
+        articleRepository.saveAll(articles);
+
+        List<Comment> comments = generateComments(
+                articles,
+                List.of(author1, author2, author3),
+                3, 11, 6, 23, 0, 4, 6, 1
+        );
+        commentRepository.saveAll(comments);
+
+        final Long articleId = articles.get(3).getId();
+
+        final PageRequest pageable = PageRequest.of(4, 5);
+
+        //when
+        Page<Comment> findComments = commentQueryService.findByArticleId(articleId, pageable);
+
+        //then
+        assertThat(findComments.getTotalElements())
                 .as("총 댓글 수")
-                .isEqualTo(67L);
+                .isEqualTo(23L);
 
-        assertThat(commentsOfArticle2_2.getTotalElements())
+        assertThat(findComments.getContent())
+                .as("댓글")
+                .containsExactlyElementsOf(comments.subList(40, 43));
+
+        assertThat(findComments.getContent())
+                .extracting("author")
+                .as("댓글 작성자")
+                .containsExactly(author2, author3, author1);
+    }
+
+    @Test
+    @DisplayName("게시글 ID로 조회 성공 - 페이지 내 결과 없음")
+    void findByArticleId_emptyPage() {
+        //given
+        User author1 = createAndSaveUser("author1", "author1@board.com", "");
+        User author2 = createAndSaveUser("author2", "author2@board.com", "");
+        User author3 = createAndSaveUser("author3", "author3@board.com", "");
+
+        List<Article> articles = generateArticles(20, author1, author2, author3);
+        articleRepository.saveAll(articles);
+
+        List<Comment> comments = generateComments(
+                articles,
+                List.of(author1, author2, author3),
+                4, 3, 2, 1, 0
+        );
+        commentRepository.saveAll(comments);
+
+        final Long articleId = articles.get(0).getId();
+
+        final PageRequest pageable = PageRequest.of(1, 5);
+
+        //when
+        Page<Comment> findComments = commentQueryService.findByArticleId(articleId, pageable);
+
+        //then
+        assertThat(findComments.getTotalElements())
                 .as("총 댓글 수")
-                .isEqualTo(67L);
+                .isEqualTo(4L);
 
-        assertThat(commentsOfArticle2_3.getTotalElements())
-                .as("총 댓글 수")
-                .isEqualTo(67L);
+        assertThat(findComments.getContent().isEmpty())
+                .as("페이지 내 댓글 없음")
+                .isTrue();
+    }
 
-        assertThat(commentsOfArticle1_1.getContent())
-                .extracting("content")
-                .as("댓글 내용")
-                .containsExactly("comment 2", "comment 5", "comment 8", "comment 11", "comment 14", "comment 17", "comment 20", "comment 23", "comment 26", "comment 29");
+    @Test
+    @DisplayName("게시글 ID로 조회 실패")
+    void findByArticleId_fail() {
+        //given
+        User author1 = createAndSaveUser("author1", "author1@board.com", "");
+        User author2 = createAndSaveUser("author2", "author2@board.com", "");
+        User author3 = createAndSaveUser("author3", "author3@board.com", "");
 
-        assertThat(commentsOfArticle1_2.getContent())
-                .extracting("content")
-                .as("댓글 내용")
-                .containsExactly("comment 80", "comment 83", "comment 86", "comment 89", "comment 92", "comment 95", "comment 98");
+        List<Article> articles = generateArticles(20, author1, author2, author3);
+        articleRepository.saveAll(articles);
 
-        assertThat(commentsOfArticle1_3.getContent())
-                .extracting("content")
-                .as("댓글 내용")
-                .containsExactly("comment 47", "comment 50", "comment 53", "comment 56", "comment 59");
+        List<Comment> comments = generateComments(
+                articles,
+                List.of(author1, author2, author3),
+                1, 2, 3, 4, 5
+        );
+        commentRepository.saveAll(comments);
 
-        assertThat(commentsOfArticle2_1.getContent())
-                .extracting("content")
-                .as("댓글 내용")
-                .containsExactly("comment 0", "comment 1", "comment 3", "comment 4", "comment 6", "comment 7", "comment 9", "comment 10", "comment 12", "comment 13");
+        final Long WRONG_ARTICLE_ID = 666L;
 
-        assertThat(commentsOfArticle2_2.getContent())
-                .extracting("content")
-                .as("댓글 내용")
-                .containsExactly("comment 39", "comment 40", "comment 42", "comment 43", "comment 45", "comment 46", "comment 48", "comment 49", "comment 51", "comment 52", "comment 54", "comment 55", "comment 57");
+        final PageRequest pageable = PageRequest.of(0, 5);
 
-        assertThat(commentsOfArticle2_3.getContent())
-                .extracting("content")
-                .as("댓글 내용")
-                .containsExactly("comment 22", "comment 24", "comment 25", "comment 27", "comment 28");
+        //when & then
+        assertThatThrownBy(() -> commentQueryService.findByArticleId(WRONG_ARTICLE_ID, pageable))
+                .as("존재하지 않는 게시글 ID")
+                .isInstanceOf(IllegalArgumentException.class);
     }
 }
