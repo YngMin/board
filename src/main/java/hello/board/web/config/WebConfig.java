@@ -2,6 +2,7 @@ package hello.board.web.config;
 
 import hello.board.web.argumentresolver.LoginArgumentResolver;
 import hello.board.web.aspect.BindingAspect;
+import hello.board.web.dtoresolver.ArticleServiceDtoResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,4 +26,5 @@ public class WebConfig implements WebMvcConfigurer {
     public BindingAspect bindingAspect() {
         return new BindingAspect();
     }
+
 }

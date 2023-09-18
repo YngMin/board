@@ -1,7 +1,7 @@
 package hello.board.dto.api;
 
 import hello.board.domain.Comment;
-import hello.board.dto.service.CommentServiceDto;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -20,9 +20,6 @@ public final class CommentApiDto {
         @NotEmpty
         private String content;
 
-        public CommentServiceDto.Save toDto() {
-            return CommentServiceDto.Save.create(content);
-        }
     }
 
     @Getter
@@ -37,6 +34,17 @@ public final class CommentApiDto {
         public static SaveResponse create(Long id) {
             return new SaveResponse(id);
         }
+    }
+
+    @Getter
+    @Setter
+    public static final class PageRequest {
+
+        @Min(0)
+        private int page = 1;
+
+        @Min(1)
+        private int size = 10;
     }
 
     @Getter
@@ -63,10 +71,6 @@ public final class CommentApiDto {
 
         @NotEmpty
         private String content;
-
-        public CommentServiceDto.Update toDto() {
-            return CommentServiceDto.Update.create(content);
-        }
     }
 
     @Getter

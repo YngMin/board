@@ -2,11 +2,13 @@ package hello.board.web.controller.api;
 
 import hello.board.domain.Article;
 import hello.board.domain.User;
-import hello.board.dto.api.page.ArticlePageRequest;
+import hello.board.dto.service.ArticleServiceDto.Save;
+import hello.board.dto.service.ArticleServiceDto.Update;
 import hello.board.dto.service.search.ArticleSearchCond;
 import hello.board.service.command.ArticleService;
 import hello.board.service.query.ArticleQueryService;
 import hello.board.web.annotation.Login;
+import hello.board.web.dtoresolver.ArticleServiceDtoResolver;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -27,17 +29,17 @@ public class ArticleApiController {
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/api/articles")
-    public SaveResponse postArticle(@RequestBody @Valid SaveRequest request, BindingResult br, @Login User user) {
-        Long id = articleService.save(user.getId(), request.toDto());
+    public SaveResponse postArticle(@Valid @RequestBody SaveRequest request, BindingResult br, @Login User user) {
+        Save saveDto = ArticleServiceDtoResolver.toSaveDto(request);
+        Long id = articleService.save(user.getId(), saveDto);
         return SaveResponse.create(id);
     }
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/api/articles")
-    public Page<FindListResponse> getArticles(@Valid @ModelAttribute("pageRequest") ArticlePageRequest pageRequest, BindingResult br,
-                                              @ModelAttribute("cond") ArticleSearchCond cond
-    ) {
-        Pageable pageable = pageRequest.toPageable();
+    public Page<FindListResponse> getArticles(@Valid @ModelAttribute FindRequest request, BindingResult br) {
+        Pageable pageable = ArticleServiceDtoResolver.toPageable(request);
+        ArticleSearchCond cond = ArticleServiceDtoResolver.toSearchCond(request);
         return articleQueryService.search(cond, pageable)
                 .map(FindListResponse::of);
     }
@@ -51,8 +53,9 @@ public class ArticleApiController {
 
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("/api/articles/{id}")
-    public UpdateResponse updateArticle(@RequestBody @Valid UpdateRequest request, BindingResult br, @Login User user, @PathVariable Long id) {
-        articleService.update(id, user.getId(), request.toDto());
+    public UpdateResponse updateArticle(@Valid @RequestBody UpdateRequest request, BindingResult br, @Login User user, @PathVariable Long id) {
+        Update updateDto = ArticleServiceDtoResolver.toUpdateDto(request);
+        articleService.update(id, user.getId(), updateDto);
         Article updatedArticle = articleQueryService.findById(id);
         return UpdateResponse.of(updatedArticle);
     }

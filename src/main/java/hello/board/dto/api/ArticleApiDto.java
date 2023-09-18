@@ -1,9 +1,11 @@
 package hello.board.dto.api;
 
 import hello.board.domain.Article;
-import hello.board.dto.service.ArticleServiceDto;
 import hello.board.dto.service.search.ArticleSearchDto;
+import hello.board.dto.service.search.ArticleSearchType;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -22,9 +24,6 @@ public final class ArticleApiDto {
         @NotBlank
         private String content;
 
-        public ArticleServiceDto.Save toDto() {
-            return ArticleServiceDto.Save.create(title, content);
-        }
     }
 
     @Getter
@@ -37,6 +36,23 @@ public final class ArticleApiDto {
         public static SaveResponse create(Long id) {
             return new SaveResponse(id);
         }
+    }
+
+    @Getter
+    @Setter
+    public static final class FindRequest {
+
+        @Min(0)
+        private int page = 1;
+
+        @Min(1)
+        private int size = 10;
+
+        @NotNull
+        private String keyword = "";
+
+        @NotNull
+        private ArticleSearchType type = ArticleSearchType.TITLE_AND_CONTENT;
     }
 
     @Getter
@@ -122,9 +138,6 @@ public final class ArticleApiDto {
         @NotBlank
         private String content;
 
-        public ArticleServiceDto.Update toDto() {
-            return ArticleServiceDto.Update.create(title, content);
-        }
     }
 
     @Getter
