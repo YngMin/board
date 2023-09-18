@@ -1,7 +1,7 @@
 package hello.board.web.config;
 
 import hello.board.web.argumentresolver.LoginArgumentResolver;
-import hello.board.web.aspect.BindingAspect;
+import hello.board.web.aspect.BindingErrorsHandlingAspect;
 import hello.board.web.dtoresolver.ArticleServiceDtoResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -23,8 +23,13 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     @Bean
-    public BindingAspect bindingAspect() {
-        return new BindingAspect();
+    public BindingErrorsHandlingAspect bindingAspect() {
+        return new BindingErrorsHandlingAspect();
+    }
+
+    @Bean
+    public ArticleServiceDtoResolver articleServiceDtoResolver() {
+        return new ArticleServiceDtoResolver();
     }
 
 }

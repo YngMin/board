@@ -14,7 +14,7 @@ public final class UserViewResponse {
         this.username = username;
     }
 
-    public static UserViewResponse from(User user) {
+    public static UserViewResponse of(User user) {
         if (user == null) {
             return empty();
         }

@@ -38,6 +38,11 @@ logging:
   level:
     org.hibernate.SQL: debug
 
+view:
+  board:
+    article-page-size: 10
+    comment-page-size: 20
+
 ---
 spring:
   config:
@@ -66,3 +71,8 @@ server:
 logging:
   level:
     org.hibernate.SQL: debug
+
+view:
+  board:
+    article-page-size: 10
+    comment-page-size: 20

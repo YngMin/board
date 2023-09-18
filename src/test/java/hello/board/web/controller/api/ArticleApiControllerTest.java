@@ -12,9 +12,9 @@ import hello.board.dto.service.search.ArticleSearchType;
 import hello.board.exception.FailToFindEntityException;
 import hello.board.service.command.ArticleService;
 import hello.board.service.query.ArticleQueryService;
-import hello.board.web.annotation.Login;
-import hello.board.web.aspect.BindingAspect;
-import jakarta.annotation.Nonnull;
+import hello.board.web.aspect.BindingErrorsHandlingAspect;
+import hello.board.web.controller.mock.MockLoginArgumentResolver;
+import hello.board.web.dtoresolver.ArticleServiceDtoResolver;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -24,9 +24,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.MethodParameter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -34,11 +34,8 @@ import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.WebApplicationContext;
-import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
-import org.springframework.web.method.support.ModelAndViewContainer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.List;
@@ -55,7 +52,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @Slf4j
 @EnableAspectJAutoProxy
-@Import(BindingAspect.class)
+@Import(BindingErrorsHandlingAspect.class)
 @WebMvcTest(ArticleApiController.class)
 @AutoConfigureMockMvc
 @MockBean(JpaMetamodelMappingContext.class)
@@ -83,22 +80,12 @@ class ArticleApiControllerTest {
         public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
             resolvers.add(new MockLoginArgumentResolver());
         }
-    }
 
-    static class MockLoginArgumentResolver implements HandlerMethodArgumentResolver {
-        @Override
-        public boolean supportsParameter(MethodParameter parameter) {
-            boolean hasLoginAnnotation = parameter.hasParameterAnnotation(Login.class);
-            boolean hasUserType = User.class.isAssignableFrom(parameter.getParameterType());
-            return hasLoginAnnotation && hasUserType;
-        }
-
-        @Override
-        public Object resolveArgument(@Nonnull MethodParameter parameter, ModelAndViewContainer mavContainer, @Nonnull NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
-            return User.create("test", "", "");
+        @Bean
+        public ArticleServiceDtoResolver articleServiceDtoResolver() {
+            return new ArticleServiceDtoResolver();
         }
     }
-
 
     @BeforeEach
     void mockMvcSetUp() {

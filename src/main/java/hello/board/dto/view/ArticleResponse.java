@@ -4,10 +4,7 @@ import hello.board.domain.Article;
 import hello.board.domain.Comment;
 import hello.board.dto.service.ArticleServiceDto;
 import hello.board.dto.service.search.ArticleSearchDto;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.domain.Page;
 
 import java.time.LocalDateTime;
@@ -38,7 +35,7 @@ public final class ArticleResponse {
         }
 
 
-        public static View from(ArticleServiceDto.LookUp param) {
+        public static View of(ArticleServiceDto.LookUp param) {
 
             Article article = param.getArticle();
             Page<Comment> comments = param.getComments();
@@ -50,12 +47,13 @@ public final class ArticleResponse {
                     .author(article.getAuthor().getName())
                     .createdAt(article.getCreatedAt())
                     .view(article.getView())
-                    .comments(comments.map(CommentViewResponse::from))
+                    .comments(comments.map(CommentViewResponse::of))
                     .build();
         }
     }
 
     @Getter
+    @EqualsAndHashCode
     public static final class ListView {
 
         private final Long id;

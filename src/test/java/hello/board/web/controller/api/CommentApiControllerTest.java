@@ -12,8 +12,9 @@ import hello.board.dto.service.CommentServiceDto.Update;
 import hello.board.exception.FailToFindEntityException;
 import hello.board.service.command.CommentService;
 import hello.board.service.query.CommentQueryService;
-import hello.board.web.annotation.Login;
-import hello.board.web.aspect.BindingAspect;
+import hello.board.web.aspect.BindingErrorsHandlingAspect;
+import hello.board.web.controller.mock.MockLoginArgumentResolver;
+import hello.board.web.dtoresolver.ArticleServiceDtoResolver;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -23,20 +24,17 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.MethodParameter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.WebApplicationContext;
-import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
-import org.springframework.web.method.support.ModelAndViewContainer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.lang.reflect.Field;
@@ -54,7 +52,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @Slf4j
 @EnableAspectJAutoProxy
-@Import(BindingAspect.class)
+@Import(BindingErrorsHandlingAspect.class)
 @WebMvcTest(CommentApiController.class)
 @AutoConfigureMockMvc
 @MockBean(JpaMetamodelMappingContext.class)
@@ -82,20 +80,10 @@ class CommentApiControllerTest {
         public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
             resolvers.add(new MockLoginArgumentResolver());
         }
-    }
 
-    static class MockLoginArgumentResolver implements HandlerMethodArgumentResolver {
-        @Override
-        public boolean supportsParameter(MethodParameter parameter) {
-            boolean hasLoginAnnotation = parameter.hasParameterAnnotation(Login.class);
-            boolean hasUserType = User.class.isAssignableFrom(parameter.getParameterType());
-
-            return hasLoginAnnotation && hasUserType;
-        }
-
-        @Override
-        public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
-            return User.create("test", "", "");
+        @Bean
+        public ArticleServiceDtoResolver articleServiceDtoResolver() {
+            return new ArticleServiceDtoResolver();
         }
     }
 
@@ -220,7 +208,6 @@ class CommentApiControllerTest {
         //given
         final long WRONG_ARTICLE_ID = 666L;
         final PageRequest pageable = PageRequest.of(0, 10);
-        final Page<Comment> page = Page.empty(pageable);
 
         given(commentQueryService.findByArticleId(eq(WRONG_ARTICLE_ID), eq(pageable)))
                 .willThrow(IllegalArgumentException.class);
@@ -393,7 +380,7 @@ class CommentApiControllerTest {
     void updateComment_fail_empty() throws Exception {
         //given
         final long articleId = 1L;
-        final Long id = 1L;
+        final long id = 1L;
         final UpdateRequest request = new UpdateRequest();
         request.setContent("");
         final String requestBody = objectMapper.writeValueAsString(request);

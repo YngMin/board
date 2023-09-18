@@ -7,7 +7,8 @@ import org.aspectj.lang.annotation.Before;
 import org.springframework.validation.BindingResult;
 
 @Aspect
-public class BindingAspect {
+public class BindingErrorsHandlingAspect {
+
     @Before("execution(* hello.board.web.controller.api..*(..))")
     public void handleBindingErrors(JoinPoint joinPoint) {
         for (Object arg : joinPoint.getArgs()) {

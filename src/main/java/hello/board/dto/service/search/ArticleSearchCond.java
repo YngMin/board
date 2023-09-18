@@ -20,4 +20,9 @@ public final class ArticleSearchCond {
     public static ArticleSearchCond create(String keyword, ArticleSearchType type) {
         return new ArticleSearchCond(keyword, type);
     }
+
+    public static ArticleSearchCond empty() {
+        return new ArticleSearchCond("", ArticleSearchType.TITLE_AND_CONTENT);
+    }
+
 }

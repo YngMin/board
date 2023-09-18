@@ -20,7 +20,7 @@ public final class CommentViewResponse {
         this.createdAt = createdAt;
     }
 
-    public static CommentViewResponse from(Comment comment) {
+    public static CommentViewResponse of(Comment comment) {
         return new CommentViewResponse(comment.getId(), comment.getContent(), comment.getAuthor().getName(), comment.getCreatedAt());
     }
 

@@ -5,21 +5,22 @@ import org.springframework.data.domain.Page;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 @Getter
-public final class PageNumberGenerator {
+public final class ViewPageNumbers {
 
     private final int previousPage;
     private final List<Integer> pageNumbers;
     private final int nextPage;
 
-    private PageNumberGenerator(int previousPage, List<Integer> pageNumbers, int nextPage) {
+    private ViewPageNumbers(int previousPage, List<Integer> pageNumbers, int nextPage) {
         this.previousPage = previousPage;
         this.pageNumbers = new ArrayList<>(pageNumbers);
         this.nextPage = nextPage;
     }
 
-    private static PageNumberGenerator build(int pageNumber, int size, int totalPage) {
+    private static ViewPageNumbers build(int pageNumber, int size, int totalPage) {
 
         int defaultPrevPage = defaultPrevPage(pageNumber, size);
         int startPage = getStartPage(defaultPrevPage);
@@ -31,14 +32,14 @@ public final class PageNumberGenerator {
 
         List<Integer> pageNumbers = getPageNumbers(startPage, endPage);
 
-        return new PageNumberGenerator(prevPage + 1, pageNumbers, nextPage + 1);
+        return new ViewPageNumbers(prevPage + 1, pageNumbers, nextPage + 1);
     }
 
-    public static <T> PageNumberGenerator buildFrom(Page<T> page) {
+    public static <T> ViewPageNumbers of(Page<T> page) {
         if (page.isEmpty()) {
-            return new PageNumberGenerator(1, List.of(1), 1);
+            return new ViewPageNumbers(1, List.of(1), 1);
         }
-        return PageNumberGenerator.build(page.getNumber(), page.getSize(), page.getTotalPages());
+        return ViewPageNumbers.build(page.getNumber(), page.getSize(), page.getTotalPages());
     }
 
     private static int getStartPage(int defaultPrevPage) {
@@ -46,12 +47,9 @@ public final class PageNumberGenerator {
     }
 
     private static List<Integer> getPageNumbers(int startPage, int endPage) {
-        List<Integer> pageNums = new ArrayList<>();
-
-        for (int p = startPage; p <= endPage; p++) {
-            pageNums.add(p+1);
-        }
-        return pageNums;
+        return IntStream.range(startPage, endPage + 1)
+                .boxed()
+                .toList();
     }
 
     private static int getEndPage(int defaultNextPage, int nextPage) {

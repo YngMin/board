@@ -27,10 +27,12 @@ public class ArticleApiController {
     private final ArticleService articleService;
     private final ArticleQueryService articleQueryService;
 
+    private final ArticleServiceDtoResolver dtoResolver;
+
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/api/articles")
     public SaveResponse postArticle(@Valid @RequestBody SaveRequest request, BindingResult br, @Login User user) {
-        Save saveDto = ArticleServiceDtoResolver.toSaveDto(request);
+        Save saveDto = dtoResolver.toSaveDto(request);
         Long id = articleService.save(user.getId(), saveDto);
         return SaveResponse.create(id);
     }
@@ -38,8 +40,8 @@ public class ArticleApiController {
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/api/articles")
     public Page<FindListResponse> getArticles(@Valid @ModelAttribute FindRequest request, BindingResult br) {
-        Pageable pageable = ArticleServiceDtoResolver.toPageable(request);
-        ArticleSearchCond cond = ArticleServiceDtoResolver.toSearchCond(request);
+        Pageable pageable = dtoResolver.toPageable(request);
+        ArticleSearchCond cond = dtoResolver.toSearchCond(request);
         return articleQueryService.search(cond, pageable)
                 .map(FindListResponse::of);
     }
@@ -54,7 +56,7 @@ public class ArticleApiController {
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("/api/articles/{id}")
     public UpdateResponse updateArticle(@Valid @RequestBody UpdateRequest request, BindingResult br, @Login User user, @PathVariable Long id) {
-        Update updateDto = ArticleServiceDtoResolver.toUpdateDto(request);
+        Update updateDto = dtoResolver.toUpdateDto(request);
         articleService.update(id, user.getId(), updateDto);
         Article updatedArticle = articleQueryService.findById(id);
         return UpdateResponse.of(updatedArticle);
