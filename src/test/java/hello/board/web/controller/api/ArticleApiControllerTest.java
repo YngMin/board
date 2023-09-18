@@ -13,7 +13,7 @@ import hello.board.exception.FailToFindEntityException;
 import hello.board.service.command.ArticleService;
 import hello.board.service.query.ArticleQueryService;
 import hello.board.web.annotation.Login;
-import lombok.extern.slf4j.Slf4j;
+import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -50,7 +50,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
-@Slf4j
 @WebMvcTest(ArticleApiController.class)
 @AutoConfigureMockMvc
 @MockBean(JpaMetamodelMappingContext.class)
@@ -81,20 +80,19 @@ class ArticleApiControllerTest {
     }
 
     static class MockLoginArgumentResolver implements HandlerMethodArgumentResolver {
-
         @Override
         public boolean supportsParameter(MethodParameter parameter) {
             boolean hasLoginAnnotation = parameter.hasParameterAnnotation(Login.class);
             boolean hasUserType = User.class.isAssignableFrom(parameter.getParameterType());
-
             return hasLoginAnnotation && hasUserType;
         }
 
         @Override
-        public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
+        public Object resolveArgument(@Nonnull MethodParameter parameter, ModelAndViewContainer mavContainer, @Nonnull NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
             return User.create("test", "", "");
         }
     }
+
 
     @BeforeEach
     void mockMvcSetUp() {
@@ -522,6 +520,186 @@ class ArticleApiControllerTest {
         //then
         result.andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("BAD"));
+    }
+
+    @Test
+    @DisplayName("PUT | /api/articles/{id} | 실패: title & content empty")
+    void updateArticle_fail_both_empty() throws Exception {
+        //given
+        final long id = 1L;
+        final UpdateRequest updateRequest = getUpdateRequest("", "");
+        final String requestBody = objectMapper.writeValueAsString(updateRequest);
+
+        //when
+        ResultActions result = mockMvc.perform(
+                put("/api/articles/" + id)
+                .contentType(APPLICATION_JSON)
+                .content(requestBody));
+
+
+        //then
+        result.andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("BAD"));
+
+        final String responseBody = result.andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        final List<String> fields = JsonPath.parse(responseBody).read("$.fieldErrors[*].field");
+
+        assertThat(fields)
+                .as("Biding Error Fields")
+                .containsExactlyInAnyOrder("title", "content");
+    }
+
+    @Test
+    @DisplayName("PUT | /api/articles/{id} | 실패: title & content blank")
+    void updateArticle_fail_both_blank() throws Exception {
+        //given
+        final long id = 1L;
+        final UpdateRequest updateRequest = getUpdateRequest("  ", "  ");
+        final String requestBody = objectMapper.writeValueAsString(updateRequest);
+
+        //when
+        ResultActions result = mockMvc.perform(
+                put("/api/articles/" + id)
+                .contentType(APPLICATION_JSON)
+                .content(requestBody)
+        );
+
+        //then
+        result.andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("BAD"));
+
+        final String responseBody = result.andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        final List<String> fields = JsonPath.parse(responseBody).read("$.fieldErrors[*].field");
+
+        assertThat(fields)
+                .as("Biding Error Fields")
+                .containsExactlyInAnyOrder("title", "content");
+    }
+
+    @Test
+    @DisplayName("PUT | /api/articles/{id} | 실패: title empty")
+    void updateArticle_fail_title_empty() throws Exception {
+        //given
+        final long id = 1L;
+        final UpdateRequest updateRequest = getUpdateRequest("", "content");
+        final String requestBody = objectMapper.writeValueAsString(updateRequest);
+
+        //when
+        ResultActions result = mockMvc.perform(
+                put("/api/articles/" + id)
+                .contentType(APPLICATION_JSON)
+                .content(requestBody)
+        );
+
+        //then
+        result.andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("BAD"));
+
+        final String responseBody = result.andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        final List<String> fields = JsonPath.parse(responseBody).read("$.fieldErrors[*].field");
+
+        assertThat(fields)
+                .as("Biding Error Fields")
+                .containsExactlyInAnyOrder("title");
+    }
+
+    @Test
+    @DisplayName("PUT | /api/articles/{id} | 실패: title blank")
+    void updateArticle_fail_title_blank() throws Exception {
+        //given
+        final long id = 1L;
+        final UpdateRequest updateRequest = getUpdateRequest(" ", "content");
+        final String requestBody = objectMapper.writeValueAsString(updateRequest);
+
+        //when
+        ResultActions result = mockMvc.perform(
+                put("/api/articles/" + id)
+                .contentType(APPLICATION_JSON)
+                .content(requestBody)
+        );
+
+        //then
+        result.andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("BAD"));
+
+        final String responseBody = result.andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        final List<String> fields = JsonPath.parse(responseBody).read("$.fieldErrors[*].field");
+
+        assertThat(fields)
+                .as("Biding Error Fields")
+                .containsExactlyInAnyOrder("title");
+    }
+
+    @Test
+    @DisplayName("PUT | /api/articles/{id} | 실패: content empty")
+    void updateArticle_fail_content_empty() throws Exception {
+        //given
+        final long id = 1L;
+        final UpdateRequest updateRequest = getUpdateRequest("title", "");
+        final String requestBody = objectMapper.writeValueAsString(updateRequest);
+
+        //when
+        ResultActions result = mockMvc.perform(
+                put("/api/articles/" + id)
+                .contentType(APPLICATION_JSON)
+                .content(requestBody)
+        );
+
+        //then
+        result.andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("BAD"));
+
+        final String responseBody = result.andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        final List<String> fields = JsonPath.parse(responseBody).read("$.fieldErrors[*].field");
+
+        assertThat(fields)
+                .as("Biding Error Fields")
+                .containsExactlyInAnyOrder("content");
+    }
+
+    @Test
+    @DisplayName("PUT | /api/articles/{id} | 실패: content blank")
+    void updateArticle_fail_content_blank() throws Exception {
+        //given
+        final long id = 1L;
+        final UpdateRequest updateRequest = getUpdateRequest("title", "   ");
+        final String requestBody = objectMapper.writeValueAsString(updateRequest);
+
+        //when
+        ResultActions result = mockMvc.perform(
+                put("/api/articles/" + id)
+                .contentType(APPLICATION_JSON)
+                .content(requestBody)
+        );
+
+        //then
+        result.andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("BAD"));
+
+        final String responseBody = result.andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        final List<String> fields = JsonPath.parse(responseBody).read("$.fieldErrors[*].field");
+
+        assertThat(fields)
+                .as("Biding Error Fields")
+                .containsExactlyInAnyOrder("content");
     }
 
     @Test

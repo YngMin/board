@@ -52,7 +52,7 @@ public final class CommentApiDto {
             this.author = author;
         }
 
-        public static FindResponse from(Comment comment) {
+        public static FindResponse of(Comment comment) {
             return new FindResponse(comment.getId(), comment.getContent(), comment.getAuthor().getName());
         }
     }
@@ -80,7 +80,7 @@ public final class CommentApiDto {
             this.modifiedAt = modifiedAt;
         }
 
-        public static UpdateResponse from(Comment comment) {
+        public static UpdateResponse of(Comment comment) {
             return new UpdateResponse(comment.getContent(), comment.getModifiedAt());
         }
     }

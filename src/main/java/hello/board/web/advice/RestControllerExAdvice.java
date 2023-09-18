@@ -32,12 +32,6 @@ public class RestControllerExAdvice {
                 .body(BindingErrorResult.of(e));
     }
 
-    @ExceptionHandler(NeedLoginException.class)
-    public ResponseEntity<ErrorResult> needLoginExHandle(NeedLoginException e) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ErrorResult.of(e));
-    }
-
     @ExceptionHandler(WrongPageRequestException.class)
     public ResponseEntity<ErrorResult> wrongPageExHandle(WrongPageRequestException e) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)

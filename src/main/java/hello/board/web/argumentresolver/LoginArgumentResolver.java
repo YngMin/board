@@ -1,7 +1,6 @@
 package hello.board.web.argumentresolver;
 
 import hello.board.domain.User;
-import hello.board.service.query.UserQueryService;
 import hello.board.web.annotation.Login;
 import hello.board.web.domain.UserDetailsImpl;
 import jakarta.annotation.Nonnull;
@@ -10,14 +9,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.MethodParameter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
 @Slf4j
-@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class LoginArgumentResolver implements HandlerMethodArgumentResolver {
 
@@ -44,5 +41,6 @@ public class LoginArgumentResolver implements HandlerMethodArgumentResolver {
         return (principal instanceof UserDetailsImpl userDetails)
                 ? userDetails.getUser()
                 : null;
+
     }
 }

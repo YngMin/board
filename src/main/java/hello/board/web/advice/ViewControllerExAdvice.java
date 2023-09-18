@@ -1,7 +1,6 @@
 package hello.board.web.advice;
 
 import hello.board.exception.FailToFindEntityException;
-import hello.board.exception.NeedLoginException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
@@ -18,13 +17,6 @@ public class ViewControllerExAdvice {
     public String failToFindEntityExHandle(FailToFindEntityException e) {
         log.info("FailToFindEntityException", e);
         return "error/404";
-    }
-
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    @ExceptionHandler(NeedLoginException.class)
-    public String needLoginExHandle(NeedLoginException e) {
-        log.info("NeedLoginException", e);
-        return "redirect:/login";
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)

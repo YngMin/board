@@ -1,7 +1,6 @@
 package hello.board.dto.api.error;
 
 import hello.board.exception.FailToFindEntityException;
-import hello.board.exception.NeedLoginException;
 import hello.board.exception.NoAuthorityException;
 import hello.board.exception.WrongPageRequestException;
 import lombok.Getter;
@@ -18,10 +17,6 @@ public class ErrorResult {
     }
 
     public static ErrorResult of(FailToFindEntityException e) {
-        return new ErrorResult("BAD", e.getMessage());
-    }
-
-    public static ErrorResult of(NeedLoginException e) {
         return new ErrorResult("BAD", e.getMessage());
     }
 

@@ -60,9 +60,9 @@ public final class ArticleApiDto {
             this.createdAt = createdAt;
         }
 
-        public static FindResponse from(Article article) {
+        public static FindResponse of(Article article) {
             List<CommentApiDto.FindResponse> comments = article.getComments().stream()
-                    .map(CommentApiDto.FindResponse::from)
+                    .map(CommentApiDto.FindResponse::of)
                     .toList();
 
             return FindResponse.builder()
@@ -97,7 +97,7 @@ public final class ArticleApiDto {
             this.numComments = numComments;
         }
 
-        public static FindListResponse from(ArticleSearchDto param) {
+        public static FindListResponse of(ArticleSearchDto param) {
 
             Article article = param.getArticle();
 
@@ -141,7 +141,7 @@ public final class ArticleApiDto {
             this.modifiedAt = modifiedAt;
         }
 
-        public static UpdateResponse from(Article article) {
+        public static UpdateResponse of(Article article) {
             return UpdateResponse.builder()
                     .title(article.getTitle())
                     .content(article.getContent())
