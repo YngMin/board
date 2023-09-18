@@ -13,7 +13,9 @@ import hello.board.exception.FailToFindEntityException;
 import hello.board.service.command.ArticleService;
 import hello.board.service.query.ArticleQueryService;
 import hello.board.web.annotation.Login;
+import hello.board.web.aspect.BindingAspect;
 import jakarta.annotation.Nonnull;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,6 +24,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.context.annotation.Import;
 import org.springframework.core.MethodParameter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -49,7 +53,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-
+@Slf4j
+@EnableAspectJAutoProxy
+@Import(BindingAspect.class)
 @WebMvcTest(ArticleApiController.class)
 @AutoConfigureMockMvc
 @MockBean(JpaMetamodelMappingContext.class)
@@ -136,6 +142,7 @@ class ArticleApiControllerTest {
         result.andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(id));
     }
+
 
     @Test
     @DisplayName("POST | /api/articles | 실패: title & content empty")

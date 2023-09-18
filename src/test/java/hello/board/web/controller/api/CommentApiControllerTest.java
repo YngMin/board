@@ -13,6 +13,7 @@ import hello.board.exception.FailToFindEntityException;
 import hello.board.service.command.CommentService;
 import hello.board.service.query.CommentQueryService;
 import hello.board.web.annotation.Login;
+import hello.board.web.aspect.BindingAspect;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -22,6 +23,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.context.annotation.Import;
 import org.springframework.core.MethodParameter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -50,6 +53,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
+@EnableAspectJAutoProxy
+@Import(BindingAspect.class)
 @WebMvcTest(CommentApiController.class)
 @AutoConfigureMockMvc
 @MockBean(JpaMetamodelMappingContext.class)

@@ -4,7 +4,6 @@ import hello.board.domain.Article;
 import hello.board.domain.User;
 import hello.board.dto.api.page.ArticlePageRequest;
 import hello.board.dto.service.search.ArticleSearchCond;
-import hello.board.exception.BindingErrorException;
 import hello.board.service.command.ArticleService;
 import hello.board.service.query.ArticleQueryService;
 import hello.board.web.annotation.Login;
@@ -28,22 +27,16 @@ public class ArticleApiController {
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/api/articles")
-    public SaveResponse postArticle(@RequestBody @Valid SaveRequest request, BindingResult bindingResult, @Login User user) {
-
-        handleBindingErrors(bindingResult);
-
+    public SaveResponse postArticle(@RequestBody @Valid SaveRequest request, BindingResult br, @Login User user) {
         Long id = articleService.save(user.getId(), request.toDto());
         return SaveResponse.create(id);
     }
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/api/articles")
-    public Page<FindListResponse> getArticles(@Valid @ModelAttribute("pageRequest") ArticlePageRequest pageRequest, BindingResult bindingResult,
+    public Page<FindListResponse> getArticles(@Valid @ModelAttribute("pageRequest") ArticlePageRequest pageRequest, BindingResult br,
                                               @ModelAttribute("cond") ArticleSearchCond cond
     ) {
-
-        handleBindingErrors(bindingResult);
-
         Pageable pageable = pageRequest.toPageable();
         return articleQueryService.search(cond, pageable)
                 .map(FindListResponse::of);
@@ -58,10 +51,7 @@ public class ArticleApiController {
 
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("/api/articles/{id}")
-    public UpdateResponse updateArticle(@RequestBody @Valid UpdateRequest request, BindingResult bindingResult, @Login User user, @PathVariable Long id) {
-
-        handleBindingErrors(bindingResult);
-
+    public UpdateResponse updateArticle(@RequestBody @Valid UpdateRequest request, BindingResult br, @Login User user, @PathVariable Long id) {
         articleService.update(id, user.getId(), request.toDto());
         Article updatedArticle = articleQueryService.findById(id);
         return UpdateResponse.of(updatedArticle);
@@ -71,11 +61,5 @@ public class ArticleApiController {
     public ResponseEntity<Void> deleteArticle(@Login User user, @PathVariable Long id) {
         articleService.delete(id, user.getId());
         return ResponseEntity.ok().build();
-    }
-
-    private static void handleBindingErrors(BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
-            throw BindingErrorException.of(bindingResult.getFieldErrors(), bindingResult.getGlobalErrors());
-        }
     }
 }
