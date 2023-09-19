@@ -5,7 +5,8 @@ import hello.board.domain.Comment;
 import hello.board.domain.User;
 import hello.board.dto.service.search.ArticleSearchCond;
 import hello.board.dto.service.search.ArticleSearchType;
-import hello.board.dto.view.BoardRequest;
+import hello.board.dto.view.BoardRequest.ArticleListRequest;
+import hello.board.dto.view.BoardRequest.ArticleRequest;
 import hello.board.dto.view.CommentViewResponse;
 import hello.board.dto.view.UserViewResponse;
 import hello.board.service.command.ArticleService;
@@ -14,11 +15,13 @@ import hello.board.service.query.CommentQueryService;
 import hello.board.util.ViewPageNumbers;
 import hello.board.web.annotation.Login;
 import hello.board.web.dtoresolver.ArticleServiceDtoResolver;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -44,7 +47,7 @@ public class BoardViewController {
     }
 
     @GetMapping("/board")
-    public String getArticles(@ModelAttribute BoardRequest.ListView request, @Login User user, Model model) {
+    public String getArticles(@Valid @ModelAttribute ArticleListRequest request, BindingResult br, @Login User user, Model model) {
 
         Pageable pageable = dtoResolver.toPageable(request);
         ArticleSearchCond cond = dtoResolver.toSearchCond(request);
@@ -61,7 +64,7 @@ public class BoardViewController {
     }
 
     @GetMapping("/board/{id}")
-    public String getArticle(@ModelAttribute BoardRequest.View request, @Login User user, @PathVariable Long id, Model model) {
+    public String getArticle(@Valid @ModelAttribute ArticleRequest request, BindingResult br, @Login User user, @PathVariable Long id, Model model) {
 
         Pageable pageable = dtoResolver.toPageable(request);
         LookUp article = articleService.lookUp(id, pageable);
@@ -86,7 +89,7 @@ public class BoardViewController {
         return "newArticle";
     }
 
-    @GetMapping("/board/{articleId}/modifying-comment")
+    @GetMapping("/board/{articleId}/modify-comment")
     public String modifyComment(@RequestParam Long id, @PathVariable Long articleId, Model model) {
         Comment comment = commentQueryService.findWithArticle(id, articleId);
         model.addAttribute("comment", CommentViewResponse.of(comment));

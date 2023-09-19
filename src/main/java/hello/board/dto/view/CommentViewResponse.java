@@ -1,11 +1,13 @@
 package hello.board.dto.view;
 
 import hello.board.domain.Comment;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
 
 @Getter
+@EqualsAndHashCode
 public final class CommentViewResponse {
 
     private final Long id;

@@ -371,9 +371,7 @@ class ArticleApiControllerTest {
         //given
         final PageRequest pageable = PageRequest.of(0, 10);
         final Page<ArticleSearchDto> page = Page.empty(pageable);
-        final ArticleSearchCond cond = new ArticleSearchCond();
-        cond.setType(ArticleSearchType.TITLE);
-        cond.setKeyword("title");
+        final ArticleSearchCond cond = ArticleSearchCond.create("title", ArticleSearchType.TITLE);
 
         given(articleQueryService.search(eq(cond), any(Pageable.class)))
                 .willReturn(page);

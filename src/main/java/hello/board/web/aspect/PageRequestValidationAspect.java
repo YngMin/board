@@ -1,7 +1,8 @@
 package hello.board.web.aspect;
 
-import hello.board.dto.view.BoardRequest.ListView;
-import hello.board.dto.view.BoardRequest.View;
+import hello.board.dto.view.ArticleResponse;
+import hello.board.dto.view.BoardRequest.ArticleListRequest;
+import hello.board.dto.view.BoardRequest.ArticleRequest;
 import hello.board.exception.WrongPageRequestException;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
@@ -22,7 +23,7 @@ public class PageRequestValidationAspect {
     private int COMMENT_PAGE_SIZE;
 
     @AfterReturning("execution(* hello.board.web.controller.view.BoardViewController.*(..)) && args(request, ..)")
-    public void validateMaliciousArticlePageRequest(JoinPoint joinPoint, ListView request) {
+    public void validateMaliciousArticlePageRequest(JoinPoint joinPoint, ArticleListRequest request) {
         Model model = getModel(joinPoint);
 
         if (model != null) {
@@ -35,14 +36,14 @@ public class PageRequestValidationAspect {
     }
 
     @AfterReturning("execution(* hello.board.web.controller.view.BoardViewController.*(..)) && args(request, ..)")
-    public void validateMaliciousArticlePageRequest(JoinPoint joinPoint, View request) {
+    public void validateMaliciousArticlePageRequest(JoinPoint joinPoint, ArticleRequest request) {
         Model model = getModel(joinPoint);
 
         if (model != null) {
             Object attribute = model.getAttribute("article");
 
-            if (attribute instanceof Page<?> pageResult) {
-                filterOutMaliciousRequest(request.getPage(), COMMENT_PAGE_SIZE, pageResult);
+            if (attribute instanceof ArticleResponse.View response) {
+                filterOutMaliciousRequest(request.getPage(), COMMENT_PAGE_SIZE, response.getComments());
             }
         }
     }

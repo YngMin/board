@@ -14,6 +14,7 @@ public final class CommentServiceDto {
 
     @Getter
     public static final class Save {
+
         private final String content;
 
         private Save(String content) {

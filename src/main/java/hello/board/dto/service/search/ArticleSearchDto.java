@@ -11,6 +11,6 @@ public class ArticleSearchDto {
 
     public ArticleSearchDto(Article article, Long numComments) {
         this.article = article;
-        this.numComments = numComments == null ? 0 : numComments;
+        this.numComments = (numComments == null) ? 0 : numComments;
     }
 }

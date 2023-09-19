@@ -13,7 +13,7 @@ public final class BoardRequest {
 
     @Getter
     @Setter
-    public static class ListView {
+    public static class ArticleListRequest {
 
         @Min(1)
         private int page = 1;
@@ -27,7 +27,7 @@ public final class BoardRequest {
 
     @Getter
     @Setter
-    public static class View {
+    public static class ArticleRequest {
 
         @Min(1)
         private int page = 1;

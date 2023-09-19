@@ -28,11 +28,11 @@ public class ArticleServiceDtoResolver {
         return PageRequest.of(findRequest.getPage() - 1, findRequest.getSize());
     }
 
-    public Pageable toPageable(BoardRequest.ListView findRequest) {
+    public Pageable toPageable(BoardRequest.ArticleListRequest findRequest) {
         return PageRequest.of(findRequest.getPage() - 1, ARTICLE_PAGE_SIZE);
     }
 
-    public Pageable toPageable(BoardRequest.View findRequest) {
+    public Pageable toPageable(BoardRequest.ArticleRequest findRequest) {
         return PageRequest.of(findRequest.getPage() - 1, COMMENT_PAGE_SIZE);
     }
 
@@ -40,7 +40,7 @@ public class ArticleServiceDtoResolver {
         return ArticleSearchCond.create(findRequest.getKeyword(), findRequest.getType());
     }
 
-    public ArticleSearchCond toSearchCond(BoardRequest.ListView findRequest) {
+    public ArticleSearchCond toSearchCond(BoardRequest.ArticleListRequest findRequest) {
         return ArticleSearchCond.create(findRequest.getKeyword(), findRequest.getType());
     }
 

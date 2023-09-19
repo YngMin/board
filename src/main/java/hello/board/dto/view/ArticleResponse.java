@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 public final class ArticleResponse {
 
     @Getter
+    @EqualsAndHashCode
     public static final class View {
 
         private final Long id;
@@ -88,6 +89,7 @@ public final class ArticleResponse {
     }
 
     @Getter
+    @EqualsAndHashCode
     public static final class Write {
 
         private final Long id;

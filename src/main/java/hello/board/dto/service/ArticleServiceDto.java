@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class ArticleServiceDto {
+
     @Getter
     public static class Save {
 

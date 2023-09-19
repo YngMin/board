@@ -3,14 +3,12 @@ package hello.board.dto.service.search;
 import lombok.*;
 
 @Getter
-@Setter
 @ToString
 @EqualsAndHashCode(exclude = {"keyword", "type"})
-@NoArgsConstructor
 public final class ArticleSearchCond {
 
-    private String keyword;
-    private ArticleSearchType type = ArticleSearchType.TITLE_AND_CONTENT;
+    private final String keyword;
+    private final ArticleSearchType type;
 
     private ArticleSearchCond(String keyword, ArticleSearchType type) {
         this.keyword = keyword;
