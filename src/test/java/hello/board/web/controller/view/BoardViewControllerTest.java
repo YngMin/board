@@ -241,7 +241,7 @@ class BoardViewControllerTest {
         final Article article = Article.create("title", "content", getSimpleAuthor());
         final Pageable pageable = PageRequest.of(0, COMMENT_PAGE_SIZE);
 
-        final LookUp lookUp = LookUp.from(article, Page.empty(pageable));
+        final LookUp lookUp = LookUp.of(article, Page.empty(pageable));
 
         given(articleService.lookUp(eq(id), eq(pageable)))
                 .willReturn(lookUp);
@@ -271,7 +271,7 @@ class BoardViewControllerTest {
         final List<Comment> content = getComments(author, article, 30);
         final Page<Comment> page = new PageImpl<>(content, pageable, 30);
 
-        final LookUp lookUp = LookUp.from(article, page);
+        final LookUp lookUp = LookUp.of(article, page);
 
         given(articleService.lookUp(eq(id), eq(pageable)))
                 .willReturn(lookUp);
@@ -325,7 +325,7 @@ class BoardViewControllerTest {
         final Page<Comment> comments = new PageImpl<>(Collections.emptyList(), pageable, 10);
 
         given(articleService.lookUp(eq(id), eq(pageable)))
-                .willReturn(LookUp.from(article, comments));
+                .willReturn(LookUp.of(article, comments));
 
         //when
         ResultActions result = mockMvc.perform(

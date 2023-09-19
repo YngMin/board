@@ -86,7 +86,7 @@ public final class ArticleServiceDto {
             this.comments = comments;
         }
 
-        public static LookUp from(Article article, Page<Comment> comments) {
+        public static LookUp of(Article article, Page<Comment> comments) {
             return new LookUp(article, comments);
         }
     }

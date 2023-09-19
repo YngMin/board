@@ -1,6 +1,7 @@
 package hello.board.web.advice;
 
 import hello.board.exception.FailToFindEntityException;
+import hello.board.exception.WrongPageRequestException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
@@ -23,6 +24,13 @@ public class ViewControllerExAdvice {
     @ExceptionHandler(IllegalArgumentException.class)
     public String illegalArgumentExHandle(IllegalArgumentException e) {
         log.info("IllegalArgumentException", e);
+        return "error/400";
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(WrongPageRequestException.class)
+    public String wrongPageRequestExHandle(WrongPageRequestException e) {
+        log.info("WrongPageRequestExHandle", e);
         return "error/400";
     }
 }

@@ -48,7 +48,6 @@ public class BoardViewController {
 
     @GetMapping("/board")
     public String getArticles(@Valid @ModelAttribute ArticleListRequest request, BindingResult br, @Login User user, Model model) {
-
         Pageable pageable = dtoResolver.toPageable(request);
         ArticleSearchCond cond = dtoResolver.toSearchCond(request);
 
@@ -65,7 +64,6 @@ public class BoardViewController {
 
     @GetMapping("/board/{id}")
     public String getArticle(@Valid @ModelAttribute ArticleRequest request, BindingResult br, @Login User user, @PathVariable Long id, Model model) {
-
         Pageable pageable = dtoResolver.toPageable(request);
         LookUp article = articleService.lookUp(id, pageable);
         Page<Comment> comments = article.getComments();

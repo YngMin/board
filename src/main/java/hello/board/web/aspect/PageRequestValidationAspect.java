@@ -4,6 +4,7 @@ import hello.board.dto.view.ArticleResponse;
 import hello.board.dto.view.BoardRequest.ArticleListRequest;
 import hello.board.dto.view.BoardRequest.ArticleRequest;
 import hello.board.exception.WrongPageRequestException;
+import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
@@ -13,6 +14,7 @@ import org.springframework.ui.Model;
 
 import java.util.Arrays;
 
+@Slf4j
 @Aspect
 public class PageRequestValidationAspect {
 

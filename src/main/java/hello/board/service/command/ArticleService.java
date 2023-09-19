@@ -10,13 +10,17 @@ import hello.board.exception.WrongPageRequestException;
 import hello.board.repository.ArticleRepository;
 import hello.board.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
+
 import static hello.board.dto.service.ArticleServiceDto.*;
 
+@Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -26,10 +30,10 @@ public class ArticleService {
     private final UserRepository userRepository;
 
     public Long save(Long userId, Save param) {
-        User user = userRepository.findById(userId)
+        User author = userRepository.findById(userId)
                 .orElseThrow(() -> FailToFindEntityException.of("User"));
 
-        Article article = param.toEntity(user);
+        Article article = param.toEntity(author);
 
         return articleRepository.save(article).getId();
     }
@@ -37,15 +41,18 @@ public class ArticleService {
     public void update(Long articleId, Long userId, Update param) {
         Article article = findArticleById(articleId);
 
-        validateAuthor(article, userId);
+        validateUserId(article, userId);
 
-        updateArticle(article, param);
+        if (param != null) {
+            article.modifyTitle(param.getTitle());
+            article.modifyContent(param.getContent());
+        }
     }
 
     public void delete(Long articleId, Long userId) {
         Article article = findArticleById(articleId);
 
-        validateAuthor(article, userId);
+        validateUserId(article, userId);
 
         articleRepository.delete(article);
     }
@@ -65,7 +72,7 @@ public class ArticleService {
 
         Page<Comment> comments = extractCommentsFrom(result);
 
-        return LookUp.from(article, comments);
+        return LookUp.of(article, comments);
     }
 
     /* ################################################## */
@@ -75,14 +82,7 @@ public class ArticleService {
                 .orElseThrow(() -> FailToFindEntityException.of("Article"));
     }
 
-    private static void updateArticle(Article article, Update param) {
-        if (param != null) {
-            article.modifyTitle(param.getTitle());
-            article.modifyContent(param.getContent());
-        }
-    }
-
-    private static void validateAuthor(Article article, Long userId) throws NoAuthorityException {
+    private static void validateUserId(Article article, Long userId) throws NoAuthorityException {
         if (!article.isIdOfAuthor(userId)) {
             throw new NoAuthorityException("You do not have authority!");
         }
@@ -90,7 +90,7 @@ public class ArticleService {
 
     private static Article extractArticleFrom(Page<ArticleCommentFlatDto> result) {
         if (result.getTotalElements() == 0) {
-            throw new FailToFindEntityException("Article");
+            throw FailToFindEntityException.of("Article");
         }
 
         return result.getContent().stream()
@@ -100,9 +100,9 @@ public class ArticleService {
     }
 
     private static Page<Comment> extractCommentsFrom(Page<ArticleCommentFlatDto> result) {
-        boolean noComment = result.stream()
-                .anyMatch(dto -> dto.getComment() == null);
+        final boolean commentDoesNotExist = result.stream()
+                .anyMatch(Objects::isNull);
 
-        return noComment ? Page.empty() : result.map(ArticleCommentFlatDto::getComment);
+        return commentDoesNotExist ? Page.empty() : result.map(ArticleCommentFlatDto::getComment);
     }
 }

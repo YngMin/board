@@ -47,7 +47,7 @@ public final class ViewPageNumbers {
     }
 
     private static List<Integer> getPageNumbers(int startPage, int endPage) {
-        return IntStream.range(startPage, endPage + 1)
+        return IntStream.range(startPage + 1, endPage + 2)
                 .boxed()
                 .toList();
     }

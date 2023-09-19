@@ -1,6 +1,7 @@
 package hello.board.dto.service.search;
 
 import lombok.*;
+import org.springframework.util.StringUtils;
 
 @Getter
 @ToString
@@ -21,6 +22,10 @@ public final class ArticleSearchCond {
 
     public static ArticleSearchCond empty() {
         return new ArticleSearchCond("", ArticleSearchType.TITLE_AND_CONTENT);
+    }
+
+    public boolean isEmpty() {
+        return !StringUtils.hasText(keyword);
     }
 
 }
