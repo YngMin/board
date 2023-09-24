@@ -69,13 +69,13 @@ public class CommentService {
     }
 
     private static void validateArticle(Comment comment, Long articleId) {
-        if (comment.isNotMyArticle(articleId)) {
+        if (comment.isMyArticleId(articleId)) {
             throw new IllegalArgumentException("This Article does not have this Comment");
         }
     }
 
     private static void validateAuthor(Comment comment, Long userId) {
-        if (!comment.isIdOfAuthor(userId)) {
+        if (!comment.isAuthorId(userId)) {
             throw new NoAuthorityException("You do not have authority!");
         }
     }

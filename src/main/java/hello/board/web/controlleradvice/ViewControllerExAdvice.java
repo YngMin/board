@@ -1,4 +1,4 @@
-package hello.board.web.advice;
+package hello.board.web.controlleradvice;
 
 import hello.board.exception.FailToFindEntityException;
 import hello.board.exception.WrongPageRequestException;

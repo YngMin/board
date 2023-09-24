@@ -234,7 +234,7 @@ class ArticleTest {
     }
 
     @Test
-    void isIdOfAuthor_correct() {
+    void isAuthorId_correct() {
         //given
         User author = createUserByReflection("user", "user@board.com", "password");
         Article article = createArticleByReflection("title", "content", author);
@@ -244,7 +244,7 @@ class ArticleTest {
         final Long authorId = author.getId();
 
         //when
-        boolean result = article.isIdOfAuthor(authorId);
+        boolean result = article.isAuthorId(authorId);
 
         //then
         assertThat(result)
@@ -253,7 +253,7 @@ class ArticleTest {
     }
 
     @Test
-    void isIdOfAuthor_other() {
+    void isAuthorId_other() {
         //given
         User author = createUserByReflection("user", "user@board.com", "password");
         User otherAuthor = createUserByReflection("other", "other@board.com", "other");
@@ -266,7 +266,7 @@ class ArticleTest {
         Long otherAuthorId = otherAuthor.getId();
 
         //when
-        boolean result = article.isIdOfAuthor(otherAuthorId);
+        boolean result = article.isAuthorId(otherAuthorId);
 
         //then
         assertThat(result)
@@ -275,7 +275,7 @@ class ArticleTest {
     }
 
     @Test
-    void isIdOfAuthor_wrong() {
+    void isAuthorId_wrong() {
         //given
         User author = createUserByReflection("user", "user@board.com", "password");
         Article article = createArticleByReflection("title", "content", author);
@@ -285,7 +285,7 @@ class ArticleTest {
         final Long WRONG_AUTHOR_ID = 666L;
 
         //when
-        boolean result = article.isIdOfAuthor(WRONG_AUTHOR_ID);
+        boolean result = article.isAuthorId(WRONG_AUTHOR_ID);
 
         //then
         assertThat(result)

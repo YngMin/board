@@ -132,7 +132,7 @@ class CommentTest {
     }
 
     @Test
-    void isNotMyArticle_true_otherArticleId() {
+    void isNotMyArticleId_true_otherArticleId() {
         //given
         User author = createUserByReflection("user", "user@board.com", "password");
         Article article = createArticleByReflection("title", "content", author);
@@ -143,7 +143,7 @@ class CommentTest {
         setIdOfArticle(other, 2L);
 
         //when
-        boolean notMyArticle = comment.isNotMyArticle(other.getId());
+        boolean notMyArticle = comment.isMyArticleId(other.getId());
 
         //then
         assertThat(notMyArticle)
@@ -152,7 +152,7 @@ class CommentTest {
     }
 
     @Test
-    void isNotMyArticle_true_wrongArticleId() {
+    void isNotMyArticleId_true_wrongArticleId() {
         //given
         User author = createUserByReflection("user", "user@board.com", "password");
         Article article = createArticleByReflection("title", "content", author);
@@ -165,7 +165,7 @@ class CommentTest {
         final Long WRONG_ARTICLE_ID = 4444L;
 
         //when
-        boolean notMyArticle = comment.isNotMyArticle(WRONG_ARTICLE_ID);
+        boolean notMyArticle = comment.isMyArticleId(WRONG_ARTICLE_ID);
 
         //then
         assertThat(notMyArticle)
@@ -174,7 +174,7 @@ class CommentTest {
     }
 
     @Test
-    void isNotMyArticle_false() {
+    void isNotMyArticleId_false() {
         //given
         User author = createUserByReflection("user", "user@board.com", "password");
         Article article = createArticleByReflection("title", "content", author);
@@ -185,7 +185,7 @@ class CommentTest {
         setIdOfArticle(other, 2L);
 
         //when
-        boolean notMyArticle = comment.isNotMyArticle(article.getId());
+        boolean notMyArticle = comment.isMyArticleId(article.getId());
 
         //then
         assertThat(notMyArticle)
@@ -194,7 +194,7 @@ class CommentTest {
     }
 
     @Test
-    void isIdOfAuthor_true() {
+    void isAuthorId_true() {
         //given
         User author = createUserByReflection("user", "user@board.com", "password");
         User other = createUserByReflection("other", "other@board.com", "password");
@@ -207,7 +207,7 @@ class CommentTest {
         setIdOfUser(other, 2L);
 
         //when
-        boolean idOfAuthor = comment.isIdOfAuthor(author.getId());
+        boolean idOfAuthor = comment.isAuthorId(author.getId());
 
         //then
         assertThat(idOfAuthor)
@@ -216,7 +216,7 @@ class CommentTest {
     }
 
     @Test
-    void isIdOfAuthor_false_otherAuthorId() {
+    void isAuthorId_false_otherAuthorId() {
         //given
         User author = createUserByReflection("user", "user@board.com", "password");
         User other = createUserByReflection("other", "other@board.com", "password");
@@ -229,7 +229,7 @@ class CommentTest {
         setIdOfUser(other, 2L);
 
         //when
-        boolean idOfAuthor = comment.isIdOfAuthor(other.getId());
+        boolean idOfAuthor = comment.isAuthorId(other.getId());
 
         //then
         assertThat(idOfAuthor)
@@ -238,7 +238,7 @@ class CommentTest {
     }
 
     @Test
-    void isIdOfAuthor_false_wrongUserId() {
+    void isAuthorId_false_wrongUserId() {
         //given
         User author = createUserByReflection("user", "user@board.com", "password");
         User other = createUserByReflection("other", "other@board.com", "password");
@@ -253,7 +253,7 @@ class CommentTest {
         final Long WRONG_USER_ID = 4444L;
 
         //when
-        boolean idOfAuthor = comment.isIdOfAuthor(WRONG_USER_ID);
+        boolean idOfAuthor = comment.isAuthorId(WRONG_USER_ID);
 
         //then
         assertThat(idOfAuthor)

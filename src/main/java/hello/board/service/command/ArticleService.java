@@ -83,7 +83,7 @@ public class ArticleService {
     }
 
     private static void validateUserId(Article article, Long userId) throws NoAuthorityException {
-        if (!article.isIdOfAuthor(userId)) {
+        if (!article.isAuthorId(userId)) {
             throw new NoAuthorityException("You do not have authority!");
         }
     }

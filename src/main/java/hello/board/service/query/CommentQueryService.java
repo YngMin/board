@@ -48,7 +48,7 @@ public class CommentQueryService {
     }
 
     private static void validateArticle(Comment comment, Long articleId) {
-        if (comment.isNotMyArticle(articleId)) {
+        if (comment.isMyArticleId(articleId)) {
             throw new IllegalArgumentException("wrong article id: " + articleId);
         }
     }

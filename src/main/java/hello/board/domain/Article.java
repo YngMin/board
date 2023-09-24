@@ -69,7 +69,7 @@ public class Article extends BaseEntity {
         return this;
     }
 
-    public boolean isIdOfAuthor(Long userId) {
+    public boolean isAuthorId(Long userId) {
         return Objects.equals(author.getId(), userId);
     }
 
