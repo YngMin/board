@@ -24,11 +24,12 @@ public class CommentApiController {
 
     private final CommentService commentService;
     private final CommentQueryService commentQueryService;
+    private final CommentServiceDtoResolver dtoResolver;
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/api/articles/{articleId}/comments")
     public SaveResponse addComment(@Valid @RequestBody SaveRequest request, BindingResult br, @Login User user, @PathVariable Long articleId) {
-        CommentServiceDto.Save saveDto = CommentServiceDtoResolver.toSaveDto(request);
+        CommentServiceDto.Save saveDto = dtoResolver.toSaveDto(request);
         Long id = commentService.save(articleId, user.getId(), saveDto);
         return SaveResponse.create(id);
     }
@@ -36,7 +37,7 @@ public class CommentApiController {
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/api/articles/{articleId}/comments")
     public Page<FindResponse> getComments(@Valid @ModelAttribute PageRequest pageRequest, BindingResult br, @PathVariable Long articleId) {
-        Pageable pageable = CommentServiceDtoResolver.toPageable(pageRequest);
+        Pageable pageable = dtoResolver.toPageable(pageRequest);
         return commentQueryService.findByArticleId(articleId, pageable)
                 .map(FindResponse::of);
     }
@@ -50,7 +51,7 @@ public class CommentApiController {
 
     @PutMapping("/api/articles/{articleId}/comments/{commentId}")
     public UpdateResponse updateComment(@Valid @RequestBody UpdateRequest request, BindingResult br, @Login User user, @PathVariable Long articleId, @PathVariable Long commentId) {
-        CommentServiceDto.Update updateDto = CommentServiceDtoResolver.toUpdateDto(request);
+        CommentServiceDto.Update updateDto = dtoResolver.toUpdateDto(request);
         commentService.update(commentId, articleId, user.getId(), updateDto);
         Comment comment = commentQueryService.findById(commentId);
         return UpdateResponse.of(comment);

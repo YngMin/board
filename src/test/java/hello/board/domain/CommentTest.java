@@ -2,7 +2,7 @@ package hello.board.domain;
 
 import org.junit.jupiter.api.Test;
 
-import static hello.board.domain.EntityReflectionUtils.*;
+import static hello.board.domain.util.EntityReflectionUtils.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CommentTest {

@@ -2,11 +2,11 @@ package hello.board.web.controller.view;
 
 import hello.board.dto.form.UserForm;
 import hello.board.dto.form.UserForm.Save;
+import hello.board.dto.service.UserServiceDto;
 import hello.board.service.command.UserService;
-import hello.board.service.query.UserQueryService;
+import hello.board.web.dtoresolver.UserServiceDtoResolver;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -18,8 +18,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 @RequiredArgsConstructor
 public class UserViewController {
 
-    private final UserQueryService userQueryService;
     private final UserService userService;
+    private final UserServiceDtoResolver dtoResolver;
 
     @GetMapping("/login")
     public String loginForm(Model model) {
@@ -34,31 +34,10 @@ public class UserViewController {
     }
 
     @PostMapping("/join")
-    public String join(@Valid @ModelAttribute("userSaveForm") Save userSaveForm,
-                       BindingResult bindingResult)
-    {
-
-        if (bindingResult.hasErrors()) {
-            return "login/joinForm";
-        }
-
-        if (userSaveForm.passwordDoesNotMatch()) {
-            bindingResult.reject("PasswordNotMatch");
-            return "login/joinForm";
-        }
-
-        if (userQueryService.existsByEmail(userSaveForm.getEmail())) {
-            bindingResult.reject("EmailExists");
-            return "login/joinForm";
-        }
-
-        try {
-            userService.save(userSaveForm.toDto());
-        } catch(DataIntegrityViolationException e) {
-            bindingResult.reject("EmailExists");
-            return "login/joinForm";
-        }
-
+    public String join(@Valid @ModelAttribute("user") Save saveForm, BindingResult br) {
+        UserServiceDto.Save param = dtoResolver.toSaveDto(saveForm);
+        userService.save(param);
         return "redirect:/login";
     }
+
 }

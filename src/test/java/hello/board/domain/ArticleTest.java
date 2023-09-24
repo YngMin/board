@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static hello.board.domain.EntityReflectionUtils.*;
+import static hello.board.domain.util.EntityReflectionUtils.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ArticleTest {

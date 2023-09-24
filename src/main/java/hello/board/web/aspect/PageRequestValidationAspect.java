@@ -8,7 +8,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.annotation.Order;
 import org.springframework.data.domain.Page;
 import org.springframework.ui.Model;
 
@@ -16,6 +18,7 @@ import java.util.Arrays;
 
 @Slf4j
 @Aspect
+@Order(2)
 public class PageRequestValidationAspect {
 
     @Value("${view.board.article-page-size}")
@@ -24,7 +27,10 @@ public class PageRequestValidationAspect {
     @Value("${view.board.comment-page-size}")
     private int COMMENT_PAGE_SIZE;
 
-    @AfterReturning("execution(* hello.board.web.controller.view.BoardViewController.*(..)) && args(request, ..)")
+    @Pointcut("execution(* hello.board.web.controller.view.BoardViewController.*(..))")
+    private void boardController(){}
+
+    @AfterReturning("boardController() && args(request, ..)")
     public void validateMaliciousArticlePageRequest(JoinPoint joinPoint, ArticleListRequest request) {
         Model model = getModel(joinPoint);
 
@@ -37,7 +43,7 @@ public class PageRequestValidationAspect {
         }
     }
 
-    @AfterReturning("execution(* hello.board.web.controller.view.BoardViewController.*(..)) && args(request, ..)")
+    @AfterReturning("boardController() && args(request, ..)")
     public void validateMaliciousArticlePageRequest(JoinPoint joinPoint, ArticleRequest request) {
         Model model = getModel(joinPoint);
 

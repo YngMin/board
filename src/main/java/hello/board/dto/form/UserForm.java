@@ -1,18 +1,16 @@
 package hello.board.dto.form;
 
-import hello.board.dto.service.UserServiceDto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class UserForm {
     @Getter
     @Setter
+    @EqualsAndHashCode
     public static final class Save {
 
         @NotBlank
@@ -32,17 +30,14 @@ public final class UserForm {
             return new Save();
         }
 
-        public UserServiceDto.Save toDto() {
-            return UserServiceDto.Save.create(name, email, password);
-        }
-
-        public boolean passwordDoesNotMatch() {
+        public boolean passwordsDoNotMatch() {
             return !password.equals(passwordCheck);
         }
     }
 
     @Getter
     @Setter
+    @EqualsAndHashCode
     public static final class Login {
 
         private String email;

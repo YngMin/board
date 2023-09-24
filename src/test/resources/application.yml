@@ -16,6 +16,9 @@ spring:
         use_sql_comments: false
     open-in-view: false
 
+  messages:
+    basename: errors
+
 logging:
   level:
     org.hibernate.SQL: debug

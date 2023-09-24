@@ -15,6 +15,7 @@ import hello.board.service.query.CommentQueryService;
 import hello.board.web.aspect.BindingErrorsHandlingAspect;
 import hello.board.web.controller.mock.MockLoginArgumentResolver;
 import hello.board.web.dtoresolver.ArticleServiceDtoResolver;
+import hello.board.web.dtoresolver.CommentServiceDtoResolver;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -84,6 +85,11 @@ class CommentApiControllerTest {
         @Bean
         public ArticleServiceDtoResolver articleServiceDtoResolver() {
             return new ArticleServiceDtoResolver();
+        }
+
+        @Bean
+        public CommentServiceDtoResolver commentServiceDtoResolver() {
+            return new CommentServiceDtoResolver();
         }
     }
 

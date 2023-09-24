@@ -31,8 +31,6 @@ server:
     session:
       tracking-modes: cookie
 
-  port: 5000
-
 
 logging:
   level:

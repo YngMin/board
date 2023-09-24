@@ -3,7 +3,7 @@ package hello.board.web.controller.view;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hello.board.domain.Article;
 import hello.board.domain.Comment;
-import hello.board.domain.EntityReflectionUtils;
+import hello.board.domain.util.EntityReflectionUtils;
 import hello.board.domain.User;
 import hello.board.dto.service.ArticleServiceDto.LookUp;
 import hello.board.dto.service.search.ArticleSearchCond;
@@ -20,6 +20,7 @@ import hello.board.web.aspect.BindingErrorsHandlingAspect;
 import hello.board.web.aspect.PageRequestValidationAspect;
 import hello.board.web.controller.mock.MockLoginArgumentResolver;
 import hello.board.web.dtoresolver.ArticleServiceDtoResolver;
+import hello.board.web.dtoresolver.CommentServiceDtoResolver;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -98,6 +99,11 @@ class BoardViewControllerTest {
         @Bean
         public ArticleServiceDtoResolver articleServiceDtoResolver() {
             return new ArticleServiceDtoResolver();
+        }
+
+        @Bean
+        public CommentServiceDtoResolver commentServiceDtoResolver() {
+            return new CommentServiceDtoResolver();
         }
     }
 
