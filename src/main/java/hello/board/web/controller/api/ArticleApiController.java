@@ -8,6 +8,7 @@ import hello.board.dto.service.search.ArticleSearchCond;
 import hello.board.service.command.ArticleService;
 import hello.board.service.query.ArticleQueryService;
 import hello.board.web.annotation.Login;
+import hello.board.web.annotation.RestValidBinding;
 import hello.board.web.dtoresolver.ArticleServiceDtoResolver;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ public class ArticleApiController {
 
     private final ArticleServiceDtoResolver dtoResolver;
 
+    @RestValidBinding
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/api/articles")
     public SaveResponse postArticle(@Valid @RequestBody SaveRequest request, BindingResult br, @Login User user) {
@@ -37,6 +39,7 @@ public class ArticleApiController {
         return SaveResponse.create(id);
     }
 
+    @RestValidBinding
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/api/articles")
     public Page<FindListResponse> getArticles(@Valid @ModelAttribute FindRequest request, BindingResult br) {
@@ -53,6 +56,7 @@ public class ArticleApiController {
         return FindResponse.of(article);
     }
 
+    @RestValidBinding
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("/api/articles/{id}")
     public UpdateResponse updateArticle(@Valid @RequestBody UpdateRequest request, BindingResult br, @Login User user, @PathVariable Long id) {

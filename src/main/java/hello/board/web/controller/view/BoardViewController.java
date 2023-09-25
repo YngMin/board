@@ -13,7 +13,9 @@ import hello.board.service.command.ArticleService;
 import hello.board.service.query.ArticleQueryService;
 import hello.board.service.query.CommentQueryService;
 import hello.board.util.ViewPageNumbers;
+import hello.board.web.annotation.ValidBinding;
 import hello.board.web.annotation.Login;
+import hello.board.web.annotation.ValidPage;
 import hello.board.web.dtoresolver.ArticleServiceDtoResolver;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -36,9 +38,7 @@ public class BoardViewController {
 
     private final ArticleQueryService articleQueryService;
     private final CommentQueryService commentQueryService;
-
     private final ArticleService articleService;
-
     private final ArticleServiceDtoResolver dtoResolver;
 
     @GetMapping("/")
@@ -47,6 +47,8 @@ public class BoardViewController {
     }
 
     @GetMapping("/board")
+    @ValidBinding(goBackTo = "redirect:/board")
+    @ValidPage(attributeName = "articles", requestType = ArticleListRequest.class)
     public String getArticles(@Valid @ModelAttribute ArticleListRequest request, BindingResult br, @Login User user, Model model) {
         Pageable pageable = dtoResolver.toPageable(request);
         ArticleSearchCond cond = dtoResolver.toSearchCond(request);
@@ -63,13 +65,18 @@ public class BoardViewController {
     }
 
     @GetMapping("/board/{id}")
+    @ValidBinding(goBackTo = "redirect:/board")
+    @ValidPage(pageSize = 20, attributeName = "comments", requestType = ArticleRequest.class)
     public String getArticle(@Valid @ModelAttribute ArticleRequest request, BindingResult br, @Login User user, @PathVariable Long id, Model model) {
         Pageable pageable = dtoResolver.toPageable(request);
         LookUp article = articleService.lookUp(id, pageable);
         Page<Comment> comments = article.getComments();
 
+        View articleView = View.of(article);
+
         model.addAttribute("user", UserViewResponse.of(user));
-        model.addAttribute("article", View.of(article));
+        model.addAttribute("article", articleView);
+        model.addAttribute("comments", articleView.getComments());
         addPageAttribute(model, ViewPageNumbers.of(comments));
 
         return "article";

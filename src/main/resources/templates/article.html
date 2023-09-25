@@ -64,7 +64,7 @@
           <td th:text="${#temporals.format(article.createdAt, 'yyyy-MM-dd HH:mm')}">2023-08-08 15:09</td>
           <td class="justify-content-end">
             <button type="button"
-                    th:onclick="|location.href='@{/board/{articleId}/modifying-comment(articleId=${article.id}, id=${comment.id})}'|"
+                    th:onclick="|location.href='@{/board/{articleId}/modify-comment(articleId=${article.id}, id=${comment.id})}'|"
                     class="btn btn-secondary btn-sm mx-1">수정</button>
             <button type="button"
                     class="btn btn-secondary btn-sm comment-delete-btn mx-1">삭제</button>

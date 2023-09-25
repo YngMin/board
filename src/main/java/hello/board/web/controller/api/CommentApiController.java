@@ -6,6 +6,7 @@ import hello.board.dto.service.CommentServiceDto;
 import hello.board.service.command.CommentService;
 import hello.board.service.query.CommentQueryService;
 import hello.board.web.annotation.Login;
+import hello.board.web.annotation.RestValidBinding;
 import hello.board.web.dtoresolver.CommentServiceDtoResolver;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ public class CommentApiController {
     private final CommentQueryService commentQueryService;
     private final CommentServiceDtoResolver dtoResolver;
 
+    @RestValidBinding
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/api/articles/{articleId}/comments")
     public SaveResponse addComment(@Valid @RequestBody SaveRequest request, BindingResult br, @Login User user, @PathVariable Long articleId) {
@@ -34,6 +36,7 @@ public class CommentApiController {
         return SaveResponse.create(id);
     }
 
+    @RestValidBinding
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/api/articles/{articleId}/comments")
     public Page<FindResponse> getComments(@Valid @ModelAttribute PageRequest pageRequest, BindingResult br, @PathVariable Long articleId) {
@@ -49,6 +52,7 @@ public class CommentApiController {
         return FindResponse.of(comment);
     }
 
+    @RestValidBinding
     @PutMapping("/api/articles/{articleId}/comments/{commentId}")
     public UpdateResponse updateComment(@Valid @RequestBody UpdateRequest request, BindingResult br, @Login User user, @PathVariable Long articleId, @PathVariable Long commentId) {
         CommentServiceDto.Update updateDto = dtoResolver.toUpdateDto(request);

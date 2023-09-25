@@ -2,11 +2,11 @@ package hello.board.web.aspect;
 
 import hello.board.dto.form.UserForm;
 import hello.board.service.query.UserQueryService;
+import hello.board.web.annotation.ValidNewUser;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.core.annotation.Order;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.validation.BindingResult;
@@ -18,30 +18,30 @@ public class UserJoinValidationAspect {
 
     private final UserQueryService userQueryService;
 
-    @Pointcut("execution(* hello.board.web.controller.view.UserViewController.*(..))")
-    private void userViewController(){}
+    @Around("@annotation(validNewUser) && args(saveForm, bindingResult, ..)")
+    public Object handleBindingErrors(ProceedingJoinPoint joinPoint, ValidNewUser validNewUser, UserForm.Save saveForm, BindingResult bindingResult) throws Throwable {
 
-    @Around("userViewController() && args(saveForm, bindingResult, ..)")
-    public Object handleBindingErrors(ProceedingJoinPoint joinPoint, UserForm.Save saveForm, BindingResult bindingResult) throws Throwable {
+        final String viewName = validNewUser.goBackTo();
+
         if (bindingResult.hasErrors()) {
-            return "login/joinForm";
+            return viewName;
         }
 
         if (saveForm.passwordsDoNotMatch()) {
             bindingResult.reject("PasswordNotMatch");
-            return "login/joinForm";
+            return viewName;
         }
 
         if (userQueryService.existsByEmail(saveForm.getEmail())) {
             bindingResult.reject("EmailExists");
-            return "login/joinForm";
+            return viewName;
         }
 
         try {
             return joinPoint.proceed();
         } catch (DataIntegrityViolationException e) {
             bindingResult.reject("EmailExists");
-            return "login/joinForm";
+            return viewName;
         }
     }
 }

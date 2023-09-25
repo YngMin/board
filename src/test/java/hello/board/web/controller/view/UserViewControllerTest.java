@@ -8,6 +8,7 @@ import hello.board.service.query.UserQueryService;
 import hello.board.web.aspect.BindingErrorsHandlingAspect;
 import hello.board.web.aspect.UserJoinValidationAspect;
 import hello.board.web.config.SecurityConfig;
+import hello.board.web.config.WebConfig;
 import hello.board.web.dtoresolver.UserServiceDtoResolver;
 import hello.board.web.interceptor.UserJoinHttpStatusInterceptor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,9 +19,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.EnableAspectJAutoProxy;
-import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.*;
+import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -29,16 +29,18 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import static org.mockito.BDDMockito.given;
+import static org.springframework.context.annotation.FilterType.ASSIGNABLE_TYPE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @Slf4j
-@EnableAspectJAutoProxy
-@Import(SecurityConfig.class)
-@WebMvcTest(UserViewController.class)
 @AutoConfigureMockMvc
+@EnableAspectJAutoProxy
 @MockBean(JpaMetamodelMappingContext.class)
+@Import({UserViewController.class, SecurityConfig.class})
+@WebMvcTest(value = UserViewController.class,
+        excludeFilters = @Filter(type = ASSIGNABLE_TYPE, classes = WebConfig.class))
 class UserViewControllerTest {
 
     @Autowired

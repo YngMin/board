@@ -13,6 +13,8 @@ import hello.board.exception.FailToFindEntityException;
 import hello.board.service.command.ArticleService;
 import hello.board.service.query.ArticleQueryService;
 import hello.board.web.aspect.BindingErrorsHandlingAspect;
+import hello.board.web.config.SecurityConfig;
+import hello.board.web.config.WebConfig;
 import hello.board.web.controller.mock.MockLoginArgumentResolver;
 import hello.board.web.dtoresolver.ArticleServiceDtoResolver;
 import lombok.extern.slf4j.Slf4j;
@@ -24,9 +26,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.EnableAspectJAutoProxy;
-import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.*;
+import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -45,17 +46,19 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
+import static org.springframework.context.annotation.FilterType.ASSIGNABLE_TYPE;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
-@EnableAspectJAutoProxy
-@Import(BindingErrorsHandlingAspect.class)
-@WebMvcTest(ArticleApiController.class)
 @AutoConfigureMockMvc
+@EnableAspectJAutoProxy
 @MockBean(JpaMetamodelMappingContext.class)
+@Import({ArticleApiController.class, SecurityConfig.class, BindingErrorsHandlingAspect.class})
+@WebMvcTest(value = ArticleApiControllerTest.class,
+        excludeFilters = @Filter(type = ASSIGNABLE_TYPE, classes = WebConfig.class))
 class ArticleApiControllerTest {
 
     @Autowired
@@ -74,7 +77,7 @@ class ArticleApiControllerTest {
     ArticleQueryService articleQueryService;
 
     @TestConfiguration
-    static class WebConfig implements WebMvcConfigurer {
+    static class Config implements WebMvcConfigurer {
 
         @Override
         public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {

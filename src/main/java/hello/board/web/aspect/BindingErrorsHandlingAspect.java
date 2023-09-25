@@ -1,16 +1,14 @@
 package hello.board.web.aspect;
 
-import hello.board.dto.form.UserForm;
-import hello.board.dto.view.BoardRequest.ArticleListRequest;
-import hello.board.dto.view.BoardRequest.ArticleRequest;
 import hello.board.exception.BindingErrorException;
+import hello.board.web.annotation.ValidBinding;
+import hello.board.web.annotation.RestValidBinding;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
-import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.core.annotation.Order;
 import org.springframework.validation.BindingResult;
 
@@ -19,44 +17,31 @@ import org.springframework.validation.BindingResult;
 @Order(1)
 public class BindingErrorsHandlingAspect {
 
-    @Pointcut("execution(* hello.board.web.controller.api..*(..))")
-    private void apiControllers() {}
-
-    @Pointcut("execution(* hello.board.web.controller.view..*(..))")
-    private void viewControllers() {}
-
-    @Before("apiControllers()")
-    public void handleBindingErrors(JoinPoint joinPoint) {
+    @Before("@annotation(restValidBinding)")
+    public void handleBindingErrors(JoinPoint joinPoint, RestValidBinding restValidBinding) {
         for (Object arg : joinPoint.getArgs()) {
-            if (arg instanceof BindingResult br && br.hasErrors()) {
-                throw BindingErrorException.of(br.getFieldErrors(), br.getGlobalErrors());
+            if (arg instanceof BindingResult bindingResult) {
+                if (bindingResult.hasErrors()) {
+                    throw BindingErrorException.of(
+                            bindingResult.getFieldErrors(),
+                            bindingResult.getGlobalErrors()
+                    );
+                }
             }
         }
     }
 
-    @Around("viewControllers() && args(listRequest, bindingResult, ..)")
-    public Object handleBindingErrors(ProceedingJoinPoint joinPoint, ArticleListRequest listRequest, BindingResult bindingResult) throws Throwable {
-        if (bindingResult.hasErrors()) {
-            return "redirect:/board";
-        }
-        return joinPoint.proceed();
-    }
-
-    @Around("viewControllers() && args(articleRequest, bindingResult, ..)")
-    public Object handleBindingErrors(ProceedingJoinPoint joinPoint, ArticleRequest articleRequest, BindingResult bindingResult) throws Throwable {
-        if (bindingResult.hasErrors()) {
-            return "redirect:/board";
+    @Around("@annotation(validBinding)")
+    public Object handleBindingErrors(ProceedingJoinPoint joinPoint, ValidBinding validBinding) throws Throwable {
+        final String viewName = validBinding.goBackTo();
+        for (Object arg : joinPoint.getArgs()) {
+            if (arg instanceof BindingResult bindingResult) {
+                if (bindingResult.hasErrors()) {
+                    return viewName;
+                }
+            }
         }
 
         return joinPoint.proceed();
     }
-
-    @Around("viewControllers() && args(saveForm, bindingResult, ..)")
-    public Object handleBindingErrors(ProceedingJoinPoint joinPoint, UserForm.Save saveForm, BindingResult bindingResult) throws Throwable {
-        if (bindingResult.hasErrors()) {
-            return "login/joinForm";
-        }
-        return joinPoint.proceed();
-    }
-
 }

@@ -4,6 +4,8 @@ import hello.board.dto.form.UserForm;
 import hello.board.dto.form.UserForm.Save;
 import hello.board.dto.service.UserServiceDto;
 import hello.board.service.command.UserService;
+import hello.board.web.annotation.ValidBinding;
+import hello.board.web.annotation.ValidNewUser;
 import hello.board.web.dtoresolver.UserServiceDtoResolver;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +35,8 @@ public class UserViewController {
         return "login/joinForm";
     }
 
+    @ValidBinding(goBackTo = "login/joinForm")
+    @ValidNewUser(goBackTo = "login/joinForm")
     @PostMapping("/join")
     public String join(@Valid @ModelAttribute("user") Save saveForm, BindingResult br) {
         UserServiceDto.Save param = dtoResolver.toSaveDto(saveForm);

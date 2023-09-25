@@ -3,8 +3,8 @@ package hello.board.web.controller.view;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hello.board.domain.Article;
 import hello.board.domain.Comment;
-import hello.board.domain.util.EntityReflectionUtils;
 import hello.board.domain.User;
+import hello.board.domain.util.EntityReflectionUtils;
 import hello.board.dto.service.ArticleServiceDto.LookUp;
 import hello.board.dto.service.search.ArticleSearchCond;
 import hello.board.dto.service.search.ArticleSearchDto;
@@ -18,6 +18,7 @@ import hello.board.service.query.ArticleQueryService;
 import hello.board.service.query.CommentQueryService;
 import hello.board.web.aspect.BindingErrorsHandlingAspect;
 import hello.board.web.aspect.PageRequestValidationAspect;
+import hello.board.web.config.WebConfig;
 import hello.board.web.controller.mock.MockLoginArgumentResolver;
 import hello.board.web.dtoresolver.ArticleServiceDtoResolver;
 import hello.board.web.dtoresolver.CommentServiceDtoResolver;
@@ -31,9 +32,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.EnableAspectJAutoProxy;
-import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.*;
+import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -52,15 +52,17 @@ import java.util.stream.IntStream;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.context.annotation.FilterType.ASSIGNABLE_TYPE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @Slf4j
-@EnableAspectJAutoProxy
-@Import({PageRequestValidationAspect.class, BindingErrorsHandlingAspect.class})
-@WebMvcTest(BoardViewController.class)
 @AutoConfigureMockMvc
+@EnableAspectJAutoProxy
 @MockBean(JpaMetamodelMappingContext.class)
+@Import({BoardViewController.class, BindingErrorsHandlingAspect.class, PageRequestValidationAspect.class})
+@WebMvcTest(value = BoardViewController.class,
+        excludeFilters = @Filter(type = ASSIGNABLE_TYPE, classes = WebConfig.class))
 class BoardViewControllerTest {
 
     @Autowired
@@ -89,7 +91,7 @@ class BoardViewControllerTest {
 
 
     @TestConfiguration
-    static class WebConfig implements WebMvcConfigurer {
+    static class Config implements WebMvcConfigurer {
 
         @Override
         public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {

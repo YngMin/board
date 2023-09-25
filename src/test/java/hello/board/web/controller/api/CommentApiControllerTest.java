@@ -13,6 +13,7 @@ import hello.board.exception.FailToFindEntityException;
 import hello.board.service.command.CommentService;
 import hello.board.service.query.CommentQueryService;
 import hello.board.web.aspect.BindingErrorsHandlingAspect;
+import hello.board.web.config.WebConfig;
 import hello.board.web.controller.mock.MockLoginArgumentResolver;
 import hello.board.web.dtoresolver.ArticleServiceDtoResolver;
 import hello.board.web.dtoresolver.CommentServiceDtoResolver;
@@ -25,9 +26,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.EnableAspectJAutoProxy;
-import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.*;
+import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
@@ -46,17 +46,19 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
+import static org.springframework.context.annotation.FilterType.ASSIGNABLE_TYPE;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
-@EnableAspectJAutoProxy
-@Import(BindingErrorsHandlingAspect.class)
-@WebMvcTest(CommentApiController.class)
 @AutoConfigureMockMvc
+@EnableAspectJAutoProxy
+@Import({CommentApiController.class, BindingErrorsHandlingAspect.class})
 @MockBean(JpaMetamodelMappingContext.class)
+@WebMvcTest(value = CommentApiControllerTest.class,
+        excludeFilters = @Filter(type = ASSIGNABLE_TYPE, classes = WebConfig.class))
 class CommentApiControllerTest {
 
     @Autowired
@@ -75,7 +77,7 @@ class CommentApiControllerTest {
     CommentService commentService;
 
     @TestConfiguration
-    static class WebConfig implements WebMvcConfigurer {
+    static class Config implements WebMvcConfigurer {
 
         @Override
         public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
