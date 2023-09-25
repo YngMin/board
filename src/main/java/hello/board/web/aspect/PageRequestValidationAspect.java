@@ -49,7 +49,7 @@ public class PageRequestValidationAspect {
 
     private static Object getRequest(JoinPoint joinPoint, Class<?> requestType) {
         for (Object arg : joinPoint.getArgs()) {
-            if (requestType.isAssignableFrom(arg.getClass())) {
+            if (arg != null && requestType.isAssignableFrom(arg.getClass())) {
                 return arg;
             }
         }

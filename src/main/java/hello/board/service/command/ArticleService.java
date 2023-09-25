@@ -40,11 +40,11 @@ public class ArticleService {
     }
 
     public void update(Long articleId, Long userId, Update param) {
-        Article article = findArticleById(articleId);
-
-        validateUserId(article, userId);
-
         if (param != null) {
+            Article article = findArticleById(articleId);
+
+            validateUserId(article, userId);
+
             article.modifyTitle(param.getTitle());
             article.modifyContent(param.getContent());
         }
@@ -84,7 +84,7 @@ public class ArticleService {
     }
 
     private static void validateUserId(Article article, Long userId) throws NoAuthorityException {
-        if (!article.isAuthorId(userId)) {
+        if (article.isNotAuthorId(userId)) {
             throw new NoAuthorityException("You do not have authority!");
         }
     }

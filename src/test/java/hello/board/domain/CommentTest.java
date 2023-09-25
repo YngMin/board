@@ -143,7 +143,7 @@ class CommentTest {
         setIdOfArticle(other, 2L);
 
         //when
-        boolean notMyArticle = comment.isMyArticleId(other.getId());
+        boolean notMyArticle = comment.isNotMyArticleId(other.getId());
 
         //then
         assertThat(notMyArticle)
@@ -165,7 +165,7 @@ class CommentTest {
         final Long WRONG_ARTICLE_ID = 4444L;
 
         //when
-        boolean notMyArticle = comment.isMyArticleId(WRONG_ARTICLE_ID);
+        boolean notMyArticle = comment.isNotMyArticleId(WRONG_ARTICLE_ID);
 
         //then
         assertThat(notMyArticle)
@@ -185,7 +185,7 @@ class CommentTest {
         setIdOfArticle(other, 2L);
 
         //when
-        boolean notMyArticle = comment.isMyArticleId(article.getId());
+        boolean notMyArticle = comment.isNotMyArticleId(article.getId());
 
         //then
         assertThat(notMyArticle)
@@ -207,12 +207,12 @@ class CommentTest {
         setIdOfUser(other, 2L);
 
         //when
-        boolean idOfAuthor = comment.isAuthorId(author.getId());
+        boolean isWrongAuthorId = comment.isNotAuthorId(author.getId());
 
         //then
-        assertThat(idOfAuthor)
+        assertThat(isWrongAuthorId)
                 .as("작성자 ID가 맞음")
-                .isTrue();
+                .isFalse();
     }
 
     @Test
@@ -229,12 +229,12 @@ class CommentTest {
         setIdOfUser(other, 2L);
 
         //when
-        boolean idOfAuthor = comment.isAuthorId(other.getId());
+        boolean isWrongAuthorId = comment.isNotAuthorId(other.getId());
 
         //then
-        assertThat(idOfAuthor)
+        assertThat(isWrongAuthorId)
                 .as("작성자 ID가 아님")
-                .isFalse();
+                .isTrue();
     }
 
     @Test
@@ -253,11 +253,11 @@ class CommentTest {
         final Long WRONG_USER_ID = 4444L;
 
         //when
-        boolean idOfAuthor = comment.isAuthorId(WRONG_USER_ID);
+        boolean isWrongAuthorId = comment.isNotAuthorId(WRONG_USER_ID);
 
         //then
-        assertThat(idOfAuthor)
+        assertThat(isWrongAuthorId)
                 .as("존재하지 않는 사용자 ID")
-                .isFalse();
+                .isTrue();
     }
 }

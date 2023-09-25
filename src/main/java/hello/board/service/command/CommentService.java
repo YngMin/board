@@ -37,19 +37,21 @@ public class CommentService {
     }
 
     public void update(Long commentId, Long articleId, Long userId, Update param) {
-        Comment comment = findCommentById(commentId);
+        if (param != null) {
+            Comment comment = findCommentById(commentId);
 
-        validateArticle(comment, articleId);
-        validateAuthor(comment, userId);
+            validateArticleId(comment, articleId);
+            validateUserId(comment, userId);
 
-        updateComment(param, comment);
+            comment.modifyContent(param.getContent());
+        }
     }
 
     public void delete(Long commentId, Long articleId, Long userId) {
         Comment comment = findCommentById(commentId);
 
-        validateArticle(comment, articleId);
-        validateAuthor(comment, userId);
+        validateArticleId(comment, articleId);
+        validateUserId(comment, userId);
 
         comment.deleteFromArticle();
         commentRepository.delete(comment);
@@ -62,20 +64,14 @@ public class CommentService {
                 .orElseThrow(() -> FailToFindEntityException.of("Comment"));
     }
 
-    private static void updateComment(Update param, Comment comment) {
-        if (param != null) {
-            comment.modifyContent(param.getContent());
-        }
-    }
-
-    private static void validateArticle(Comment comment, Long articleId) {
-        if (comment.isMyArticleId(articleId)) {
+    private static void validateArticleId(Comment comment, Long articleId) {
+        if (comment.isNotMyArticleId(articleId)) {
             throw new IllegalArgumentException("This Article does not have this Comment");
         }
     }
 
-    private static void validateAuthor(Comment comment, Long userId) {
-        if (!comment.isAuthorId(userId)) {
+    private static void validateUserId(Comment comment, Long userId) {
+        if (comment.isNotAuthorId(userId)) {
             throw new NoAuthorityException("You do not have authority!");
         }
     }

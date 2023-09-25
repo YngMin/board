@@ -244,12 +244,12 @@ class ArticleTest {
         final Long authorId = author.getId();
 
         //when
-        boolean result = article.isAuthorId(authorId);
+        boolean result = article.isNotAuthorId(authorId);
 
         //then
         assertThat(result)
                 .as("게시글 작성자의 ID가 맞는지 확인")
-                .isTrue();
+                .isFalse();
     }
 
     @Test
@@ -266,12 +266,12 @@ class ArticleTest {
         Long otherAuthorId = otherAuthor.getId();
 
         //when
-        boolean result = article.isAuthorId(otherAuthorId);
+        boolean result = article.isNotAuthorId(otherAuthorId);
 
         //then
         assertThat(result)
                 .as("게시글 작성자의 ID가 맞는지 확인")
-                .isFalse();
+                .isTrue();
     }
 
     @Test
@@ -285,11 +285,11 @@ class ArticleTest {
         final Long WRONG_AUTHOR_ID = 666L;
 
         //when
-        boolean result = article.isAuthorId(WRONG_AUTHOR_ID);
+        boolean result = article.isNotAuthorId(WRONG_AUTHOR_ID);
 
         //then
         assertThat(result)
                 .as("게시글 작성자의 ID가 맞는지 확인")
-                .isFalse();
+                .isTrue();
     }
 }

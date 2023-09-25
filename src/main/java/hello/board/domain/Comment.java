@@ -53,12 +53,12 @@ public class Comment extends BaseEntity {
         article = null;
     }
 
-    public boolean isMyArticleId(Long articleId) {
+    public boolean isNotMyArticleId(Long articleId) {
         return !Objects.equals(article.getId(), articleId);
     }
 
-    public boolean isAuthorId(Long userId) {
-        return Objects.equals(author.getId(), userId);
+    public boolean isNotAuthorId(Long userId) {
+        return !Objects.equals(author.getId(), userId);
     }
 
     @Override
