@@ -181,6 +181,47 @@ class ArticleServiceTest {
     }
 
     @Test
+    @DisplayName("페이징된 댓글과 함께 조회 성공 - 댓글 없음")
+    void lookUpPaging_noComment() {
+        //given
+        User author = createAndSaveUser("author", "author1@board.com", "");
+        Article article = Article.create("title", "content", author);
+        articleRepository.save(article);
+
+        final Long id = article.getId();
+        final Pageable pageable = PageRequest.of(0, 5);
+
+        //when
+        LookUp lookUp = articleService.lookUp(id, pageable);
+
+        // then
+        //article
+        Article findArticle = lookUp.getArticle();
+
+        assertThat(findArticle)
+                .as("게시글")
+                .isEqualTo(article);
+
+        assertThat(findArticle.getView())
+                .as("조회수 증가")
+                .isEqualTo(1L);
+
+        //article.author
+        User findArticleAuthor = findArticle.getAuthor();
+
+        assertThat(findArticleAuthor)
+                .as("게시글 작성자")
+                .isEqualTo(author);
+
+        //article.comments
+        Page<Comment> findComments = lookUp.getComments();
+
+        assertThat(findComments)
+                .as("페이지 내 댓글 없음")
+                .isEmpty();
+    }
+
+    @Test
     @DisplayName("페이징된 댓글과 함께 조회 성공 - 첫 페이지")
     void lookUpPaging_firstPage() {
         //given
