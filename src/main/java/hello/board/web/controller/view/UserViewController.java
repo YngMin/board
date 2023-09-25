@@ -35,9 +35,9 @@ public class UserViewController {
         return "login/joinForm";
     }
 
+    @PostMapping("/join")
     @ValidBinding(goBackTo = "login/joinForm")
     @ValidNewUser(goBackTo = "login/joinForm")
-    @PostMapping("/join")
     public String join(@Valid @ModelAttribute("user") Save saveForm, BindingResult br) {
         UserServiceDto.Save param = dtoResolver.toSaveDto(saveForm);
         userService.save(param);

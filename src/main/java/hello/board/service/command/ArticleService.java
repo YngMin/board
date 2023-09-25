@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Objects;
 
 import static hello.board.dto.service.ArticleServiceDto.*;
@@ -100,7 +101,9 @@ public class ArticleService {
     }
 
     private static Page<Comment> extractCommentsFrom(Page<ArticleCommentFlatDto> result) {
-        final boolean commentDoesNotExist = result.stream()
+        List<ArticleCommentFlatDto> content = result.getContent();
+        final boolean commentDoesNotExist = content.stream()
+                .map(ArticleCommentFlatDto::getComment)
                 .anyMatch(Objects::isNull);
 
         return commentDoesNotExist ? Page.empty() : result.map(ArticleCommentFlatDto::getComment);

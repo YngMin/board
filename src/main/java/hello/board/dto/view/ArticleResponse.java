@@ -35,7 +35,6 @@ public final class ArticleResponse {
             this.comments = comments;
         }
 
-
         public static View of(ArticleServiceDto.LookUp param) {
 
             Article article = param.getArticle();

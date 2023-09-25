@@ -3,6 +3,7 @@ package hello.board.dto.view;
 import hello.board.domain.Comment;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import org.springframework.security.core.parameters.P;
 
 import java.time.LocalDateTime;
 
@@ -23,7 +24,12 @@ public final class CommentViewResponse {
     }
 
     public static CommentViewResponse of(Comment comment) {
-        return new CommentViewResponse(comment.getId(), comment.getContent(), comment.getAuthor().getName(), comment.getCreatedAt());
+        return new CommentViewResponse(
+                comment.getId(),
+                comment.getContent(),
+                comment.getAuthor().getName(),
+                comment.getCreatedAt()
+        );
     }
 
 
