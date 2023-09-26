@@ -2,53 +2,57 @@ package hello.board.web.controlleradvice;
 
 import hello.board.dto.api.error.BindingErrorResult;
 import hello.board.dto.api.error.ErrorResult;
-import hello.board.exception.*;
+import hello.board.exception.BindingErrorException;
+import hello.board.exception.FailToFindEntityException;
+import hello.board.exception.NoAuthorityException;
+import hello.board.exception.WrongPageRequestException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @Slf4j
 @RestControllerAdvice(annotations = RestController.class)
 public class RestControllerExAdvice {
+
+    @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler(FailToFindEntityException.class)
-    public ResponseEntity<ErrorResult> failToFindEntityExHandle(FailToFindEntityException e) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ErrorResult.of(e));
+    public ErrorResult failToFindEntityExHandle(FailToFindEntityException e) {
+        return ErrorResult.of(e);
     }
 
+    @ResponseStatus(HttpStatus.FORBIDDEN)
     @ExceptionHandler(NoAuthorityException.class)
-    public ResponseEntity<ErrorResult> noAuthorityExHandle(NoAuthorityException e) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(ErrorResult.of(e));
+    public ErrorResult noAuthorityExHandle(NoAuthorityException e) {
+        return ErrorResult.of(e);
     }
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(BindingErrorException.class)
-    public ResponseEntity<BindingErrorResult> bindingErrorExHandle(BindingErrorException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(BindingErrorResult.of(e));
+    public BindingErrorResult bindingErrorExHandle(BindingErrorException e) {
+        return BindingErrorResult.of(e);
     }
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(WrongPageRequestException.class)
-    public ResponseEntity<ErrorResult> wrongPageExHandle(WrongPageRequestException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ErrorResult.of(e));
+    public ErrorResult wrongPageExHandle(WrongPageRequestException e) {
+        return ErrorResult.of(e);
     }
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResult> methodArgumentNotValidExHandle(MethodArgumentNotValidException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(BindingErrorResult.of(e));
+    public BindingErrorResult methodArgumentNotValidExHandle(MethodArgumentNotValidException e) {
+        return BindingErrorResult.of(e);
     }
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ErrorResult> runtimeExHandle(RuntimeException e) {
+    public ErrorResult runtimeExHandle(RuntimeException e) {
         log.info("RuntimeException", e);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ErrorResult.of(e));
+        return ErrorResult.of(e);
     }
 
 }

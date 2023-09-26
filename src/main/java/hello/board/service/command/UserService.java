@@ -28,13 +28,10 @@ public class UserService {
         if (param != null) {
             User user = userRepository.findById(id)
                     .orElseThrow(() -> FailToFindEntityException.of("User"));
-            updateUser(param, user);
-        }
-    }
 
-    private void updateUser(Update param, User user) {
-        user.modifyName(param.getName());
-        user.modifyPassword(encodeRawPassword(param.getPassword()));
+            user.modifyName(param.getName());
+            user.modifyPassword(encodeRawPassword(param.getPassword()));
+        }
     }
 
     private String encodeRawPassword(String rawPassword) {

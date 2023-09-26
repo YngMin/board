@@ -62,7 +62,6 @@ public class ArticleService {
         return articleRepository.findWithComments(id)
                 .orElseThrow(() -> FailToFindEntityException.of("Article"))
                 .increaseView();
-
     }
 
     public LookUp lookUp(Long id, Pageable pageable) {

@@ -19,13 +19,9 @@ public class UserJoinValidationAspect {
     private final UserQueryService userQueryService;
 
     @Around("@annotation(validNewUser) && args(saveForm, bindingResult, ..)")
-    public Object handleBindingErrors(ProceedingJoinPoint joinPoint, ValidNewUser validNewUser, UserForm.Save saveForm, BindingResult bindingResult) throws Throwable {
+    public Object validateNewUser(ProceedingJoinPoint joinPoint, ValidNewUser validNewUser, UserForm.Save saveForm, BindingResult bindingResult) throws Throwable {
 
         final String viewName = validNewUser.goBackTo();
-
-        if (bindingResult.hasErrors()) {
-            return viewName;
-        }
 
         if (saveForm.passwordsDoNotMatch()) {
             bindingResult.reject("PasswordNotMatch");

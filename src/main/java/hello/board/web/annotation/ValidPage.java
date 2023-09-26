@@ -11,6 +11,5 @@ public @interface ValidPage {
     int pageSize() default 10;
     String attributeName();
     String requestPageFieldName() default "page";
-
     Class<?> requestType();
 }
