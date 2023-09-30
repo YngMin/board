@@ -2,6 +2,7 @@ package hello.board.web.controller.mock;
 
 import hello.board.domain.User;
 import hello.board.web.annotation.Login;
+import hello.board.web.user.LoginInfo;
 import jakarta.annotation.Nonnull;
 import org.springframework.core.MethodParameter;
 import org.springframework.web.bind.support.WebDataBinderFactory;
@@ -14,12 +15,12 @@ public class MockLoginArgumentResolver implements HandlerMethodArgumentResolver 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
         boolean hasLoginAnnotation = parameter.hasParameterAnnotation(Login.class);
-        boolean hasUserType = User.class.isAssignableFrom(parameter.getParameterType());
-        return hasLoginAnnotation && hasUserType;
+        boolean hasIdType = Long.class.isAssignableFrom(parameter.getParameterType());
+        return hasLoginAnnotation && hasIdType;
     }
 
     @Override
-    public Object resolveArgument(@Nonnull MethodParameter parameter, ModelAndViewContainer mavContainer, @Nonnull NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
-        return User.create("test", "", "");
+    public LoginInfo resolveArgument(@Nonnull MethodParameter parameter, ModelAndViewContainer mavContainer, @Nonnull NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
+        return LoginInfo.of(1L, "name");
     }
 }

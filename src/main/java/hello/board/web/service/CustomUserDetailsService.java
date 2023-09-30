@@ -2,7 +2,7 @@ package hello.board.web.service;
 
 import hello.board.domain.User;
 import hello.board.service.query.UserQueryService;
-import hello.board.web.domain.UserDetailsImpl;
+import hello.board.web.user.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -20,6 +20,6 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userQueryService.findByEmail(email);
-        return UserDetailsImpl.from(user);
+        return UserDetailsImpl.create(user.getId(), user.getName(),  user.getEmail(), user.getPassword());
     }
 }

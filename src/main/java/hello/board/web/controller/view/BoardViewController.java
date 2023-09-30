@@ -2,7 +2,6 @@ package hello.board.web.controller.view;
 
 import hello.board.domain.Article;
 import hello.board.domain.Comment;
-import hello.board.domain.User;
 import hello.board.dto.service.search.ArticleSearchCond;
 import hello.board.dto.service.search.ArticleSearchType;
 import hello.board.dto.view.BoardRequest.ArticleListRequest;
@@ -13,10 +12,11 @@ import hello.board.service.command.ArticleService;
 import hello.board.service.query.ArticleQueryService;
 import hello.board.service.query.CommentQueryService;
 import hello.board.util.ViewPageNumbers;
-import hello.board.web.annotation.ValidBinding;
 import hello.board.web.annotation.Login;
+import hello.board.web.annotation.ValidBinding;
 import hello.board.web.annotation.ValidPage;
 import hello.board.web.dtoresolver.ArticleServiceDtoResolver;
+import hello.board.web.user.LoginInfo;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -49,14 +49,14 @@ public class BoardViewController {
     @GetMapping("/board")
     @ValidBinding(goBackTo = "redirect:/board")
     @ValidPage(attributeName = "articles", requestType = ArticleListRequest.class)
-    public String getArticles(@Valid @ModelAttribute ArticleListRequest request, BindingResult br, @Login User user, Model model) {
+    public String getArticles(@Valid @ModelAttribute ArticleListRequest request, BindingResult br, @Login LoginInfo loginInfo, Model model) {
         Pageable pageable = dtoResolver.toPageable(request);
         ArticleSearchCond cond = dtoResolver.toSearchCond(request);
 
         Page<ListView> articles = articleQueryService.search(cond, pageable)
                 .map(ListView::from);
 
-        model.addAttribute("user", UserViewResponse.of(user));
+        model.addAttribute("user", getUserViewResponse(loginInfo));
         model.addAttribute("cond", cond);
         model.addAttribute("articles", articles);
         addPageAttribute(model, ViewPageNumbers.of(articles));
@@ -67,14 +67,15 @@ public class BoardViewController {
     @GetMapping("/board/{id}")
     @ValidBinding(goBackTo = "redirect:/board")
     @ValidPage(pageSize = 20, attributeName = "comments", requestType = ArticleRequest.class)
-    public String getArticle(@Valid @ModelAttribute ArticleRequest request, BindingResult br, @Login User user, @PathVariable Long id, Model model) {
+    public String getArticle(@Valid @ModelAttribute ArticleRequest request, BindingResult br, @Login LoginInfo loginInfo, @PathVariable Long id, Model model) {
         Pageable pageable = dtoResolver.toPageable(request);
         LookUp article = articleService.lookUp(id, pageable);
         Page<Comment> comments = article.getComments();
 
         View articleView = View.of(article);
 
-        model.addAttribute("user", UserViewResponse.of(user));
+
+        model.addAttribute("user", getUserViewResponse(loginInfo));
         model.addAttribute("article", articleView);
         model.addAttribute("comments", articleView.getComments());
         addPageAttribute(model, ViewPageNumbers.of(comments));
@@ -105,6 +106,12 @@ public class BoardViewController {
     @ModelAttribute
     public ArticleSearchType[] articleSearchTypes() {
         return ArticleSearchType.values();
+    }
+
+    private static UserViewResponse getUserViewResponse(LoginInfo loginInfo) {
+        return loginInfo == null
+                ? UserViewResponse.empty()
+                : UserViewResponse.of(loginInfo.getUserId(), loginInfo.getName());
     }
 
     private static void addPageAttribute(Model model, ViewPageNumbers viewPageNumbers) {

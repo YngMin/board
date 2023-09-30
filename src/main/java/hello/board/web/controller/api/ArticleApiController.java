@@ -1,7 +1,6 @@
 package hello.board.web.controller.api;
 
 import hello.board.domain.Article;
-import hello.board.domain.User;
 import hello.board.dto.service.ArticleServiceDto.Save;
 import hello.board.dto.service.ArticleServiceDto.Update;
 import hello.board.dto.service.search.ArticleSearchCond;
@@ -10,6 +9,7 @@ import hello.board.service.query.ArticleQueryService;
 import hello.board.web.annotation.Login;
 import hello.board.web.annotation.RestValidBinding;
 import hello.board.web.dtoresolver.ArticleServiceDtoResolver;
+import hello.board.web.user.LoginInfo;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -33,9 +33,9 @@ public class ArticleApiController {
     @RestValidBinding
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/api/articles")
-    public SaveResponse postArticle(@Valid @RequestBody SaveRequest request, BindingResult br, @Login User user) {
+    public SaveResponse postArticle(@Valid @RequestBody SaveRequest request, BindingResult br, @Login LoginInfo loginInfo) {
         Save saveDto = dtoResolver.toSaveDto(request);
-        Long id = articleService.save(user.getId(), saveDto);
+        Long id = articleService.save(loginInfo.getUserId(), saveDto);
         return SaveResponse.create(id);
     }
 
@@ -59,16 +59,16 @@ public class ArticleApiController {
     @RestValidBinding
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("/api/articles/{id}")
-    public UpdateResponse updateArticle(@Valid @RequestBody UpdateRequest request, BindingResult br, @Login User user, @PathVariable Long id) {
+    public UpdateResponse updateArticle(@Valid @RequestBody UpdateRequest request, BindingResult br, @Login LoginInfo loginInfo, @PathVariable Long id) {
         Update updateDto = dtoResolver.toUpdateDto(request);
-        articleService.update(id, user.getId(), updateDto);
+        articleService.update(id, loginInfo.getUserId(), updateDto);
         Article updatedArticle = articleQueryService.findById(id);
         return UpdateResponse.of(updatedArticle);
     }
 
     @DeleteMapping("/api/articles/{id}")
-    public ResponseEntity<Void> deleteArticle(@Login User user, @PathVariable Long id) {
-        articleService.delete(id, user.getId());
+    public ResponseEntity<Void> deleteArticle(@Login LoginInfo loginInfo, @PathVariable Long id) {
+        articleService.delete(id, loginInfo.getUserId());
         return ResponseEntity.ok().build();
     }
 }

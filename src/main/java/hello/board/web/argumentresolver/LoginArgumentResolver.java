@@ -1,8 +1,8 @@
 package hello.board.web.argumentresolver;
 
-import hello.board.domain.User;
 import hello.board.web.annotation.Login;
-import hello.board.web.domain.UserDetailsImpl;
+import hello.board.web.user.LoginInfo;
+import hello.board.web.user.UserDetailsImpl;
 import jakarta.annotation.Nonnull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,13 +21,13 @@ public class LoginArgumentResolver implements HandlerMethodArgumentResolver {
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
         boolean hasLoginAnnotation = parameter.hasParameterAnnotation(Login.class);
-        boolean hasUserType = User.class.isAssignableFrom(parameter.getParameterType());
+        boolean hasLoginInfoType = LoginInfo.class.isAssignableFrom(parameter.getParameterType());
 
-        return hasLoginAnnotation && hasUserType;
+        return hasLoginAnnotation && hasLoginInfoType;
     }
 
     @Override
-    public User resolveArgument(@Nonnull MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
+    public LoginInfo resolveArgument(@Nonnull MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
 
         Authentication authentication = SecurityContextHolder.getContext()
                 .getAuthentication();
@@ -39,8 +39,7 @@ public class LoginArgumentResolver implements HandlerMethodArgumentResolver {
         Object principal = authentication.getPrincipal();
 
         return (principal instanceof UserDetailsImpl userDetails)
-                ? userDetails.getUser()
+                ? LoginInfo.of(userDetails.getUserId(), userDetails.getName())
                 : null;
-
     }
 }

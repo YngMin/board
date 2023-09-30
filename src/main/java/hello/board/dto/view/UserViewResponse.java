@@ -1,6 +1,5 @@
 package hello.board.dto.view;
 
-import hello.board.domain.User;
 import lombok.Getter;
 
 @Getter
@@ -14,12 +13,8 @@ public final class UserViewResponse {
         this.username = username;
     }
 
-    public static UserViewResponse of(User user) {
-        if (user == null) {
-            return empty();
-        }
-
-        return new UserViewResponse(user.getId(), user.getName());
+    public static UserViewResponse of(Long id, String username) {
+        return new UserViewResponse(id, username);
     }
 
     public static UserViewResponse empty() {
