@@ -1,16 +1,24 @@
 spring:
-  profiles:
-    active: local
+  messages:
+    basename: errors
 
+  jpa:
+    open-in-view: false
+
+server:
+  servlet:
+    session:
+      tracking-modes: cookie
+
+view:
+  board:
+    article-page-size: 10
+    comment-page-size: 20
 ---
 spring:
   config:
     activate:
       on-profile: local
-
-  messages:
-    basename: errors
-
   jpa:
     hibernate:
       ddl-auto: create
@@ -18,59 +26,13 @@ spring:
       hibernate:
         format_sql: true
         use_sql_comments: false
-    open-in-view: false
-
   datasource:
     url: jdbc:h2:tcp://localhost/~/newboard
     username: sa
     password:
     driver-class-name: org.h2.Driver
 
-server:
-  servlet:
-    session:
-      tracking-modes: cookie
-
-
 logging:
   level:
     org.hibernate.SQL: debug
 
-view:
-  board:
-    article-page-size: 10
-    comment-page-size: 20
-
----
-spring:
-  config:
-    activate:
-      on-profile: prod
-
-  messages:
-    basename: errors
-
-  jpa:
-    hibernate:
-      ddl-auto: none
-    properties:
-      hibernate:
-        format_sql: false
-        use_sql_comments: false
-    open-in-view: false
-
-server:
-  servlet:
-    session:
-      tracking-modes: cookie
-
-  port: 5000
-
-logging:
-  level:
-    org.hibernate.SQL: debug
-
-view:
-  board:
-    article-page-size: 10
-    comment-page-size: 20

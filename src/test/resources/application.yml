@@ -1,12 +1,4 @@
 spring:
-  profiles:
-    active: test
----
-spring:
-  config:
-    activate:
-      on-profile: test
-
   jpa:
     hibernate:
       ddl-auto: create
@@ -27,10 +19,3 @@ view:
   board:
     article-page-size: 10
     comment-page-size: 20
-
----
-spring:
-  config:
-    activate:
-      on-profile: perform
-    import: application_perform.yml
