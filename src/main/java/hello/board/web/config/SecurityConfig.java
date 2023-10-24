@@ -32,7 +32,7 @@ public class SecurityConfig {
                     .authorizeHttpRequests(request -> request
                             .dispatcherTypeMatchers(DispatcherType.FORWARD).permitAll()
                             .requestMatchers(antMatcher("/"),antMatcher("/board"), antMatcher("/join"), antMatcher("/login"), antMatcher("/logout"),
-                                    antMatcher("/css/**"), antMatcher("/js/**"), antMatcher("/*.ico"), antMatcher("/error")).permitAll()
+                                    antMatcher("/actuator/**"), antMatcher("/css/**"), antMatcher("/js/**"), antMatcher("/*.ico"), antMatcher("/error")).permitAll()
                             .anyRequest().authenticated()
                     )
                     .formLogin(login -> login

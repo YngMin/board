@@ -9,11 +9,20 @@ server:
   servlet:
     session:
       tracking-modes: cookie
+  tomcat:
+    mbeanregistry:
+      enabled: true
 
 view:
   board:
     article-page-size: 10
     comment-page-size: 20
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
 ---
 spring:
   config:
